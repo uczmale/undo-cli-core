@@ -30,3 +30,6 @@ Finally, to build the package as something you can install..:
 
         # build the package
         python3 -m build
+        
+        # install the package you've built, i guess, as non-editable
+        python3 -m pip install .

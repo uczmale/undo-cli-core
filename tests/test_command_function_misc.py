@@ -4,12 +4,6 @@ from unittest.mock import patch
 import tempfile
 from click import exceptions
 
-# test imports
-from tests import assert_utils 
-
-# project specific imports
-from undo.utils import dir_utils
-
 # the module being tested
 from undo.commands.function import function_misc
 

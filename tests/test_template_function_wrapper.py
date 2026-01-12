@@ -39,7 +39,7 @@ class WrapperTestCase(unittest.TestCase):
             "/dir/{identifier}",
             "/dir/{dir_identifier}/subdir/{subdir_identifier}"
         ]
-        r = wrapper.EASIHandler.define_paths(args)
+        r = wrapper.UnHandler.define_paths(args)
 
         t = [
             {
@@ -63,10 +63,10 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_path_params_single(self):
         args = ["/dir/{identifier}", "/dir/{dir_identifier}/subdir/{subdir_identifier}"]
-        path_set = wrapper.EASIHandler.define_paths(args)
+        path_set = wrapper.UnHandler.define_paths(args)
         raw_path = "/dir/directory_identifier"
 
-        r = wrapper.EASIHandler.extract_path_params(path_set, raw_path)
+        r = wrapper.UnHandler.extract_path_params(path_set, raw_path)
 
         a = r[0]
         t = "/dir/{identifier}"
@@ -79,10 +79,10 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_path_params_multiple(self):
         args = ["/dir/{identifier}", "/dir/{dir_identifier}/subdir/{subdir_identifier}"]
-        path_set = wrapper.EASIHandler.define_paths(args)
+        path_set = wrapper.UnHandler.define_paths(args)
         raw_path = "/dir/directory_identifier/subdir/subdirectory_identifier"
 
-        r = wrapper.EASIHandler.extract_path_params(path_set, raw_path)
+        r = wrapper.UnHandler.extract_path_params(path_set, raw_path)
 
         a = r[0]
         t = "/dir/{dir_identifier}/subdir/{subdir_identifier}"
@@ -98,7 +98,7 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_query_params(self):
         query_string = "$filter=search eq search_term&modifier=awkward%20modifier"
-        r = wrapper.EASIHandler.extract_query_params(query_string)
+        r = wrapper.UnHandler.extract_query_params(query_string)
 
         t = {
             "$filter": "search eq search_term",
@@ -109,7 +109,7 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_query_params_empty(self):
         query_string = ""
-        r = wrapper.EASIHandler.extract_query_params(query_string)
+        r = wrapper.UnHandler.extract_query_params(query_string)
 
         t = None
         self.assertEqual(r, t, "Should've returned None for an empty query string")
@@ -117,7 +117,7 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_authorisation_basic(self):
         auth_header = "Basic dWN6bWFsZTpuZWxzb24="
-        r = wrapper.EASIHandler.extract_authorisation(auth_header)
+        r = wrapper.UnHandler.extract_authorisation(auth_header)
 
         t = { "lambda": { "full_name": "uczmale" } }
         self.assertEqual(r, t, "Should've extracted name from basic auth hash")
@@ -125,7 +125,7 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_authorisation_jwt(self):
         auth_header = "Bearer " + token
-        r = wrapper.EASIHandler.extract_authorisation(auth_header)
+        r = wrapper.UnHandler.extract_authorisation(auth_header)
 
         a = "https://login.microsoftonline.com/1faf88fe-a998-4c5b-93c9-210a11d9a5c2/v2.0"
         self.assertEqual(r["jwt"]["claims"]["iss"], a, "Should have captured JWT info")
@@ -134,6 +134,6 @@ class WrapperTestCase(unittest.TestCase):
 
     def test_wrapper_extract_authorisation_none(self):
         auth_header = None
-        r = wrapper.EASIHandler.extract_authorisation(auth_header)
+        r = wrapper.UnHandler.extract_authorisation(auth_header)
 
         self.assertEqual(r, None, "Should've returned None like wot it got given")

@@ -21,7 +21,8 @@ def function_command(
         operation: str = fn.OPERATION,
         context: str = fn.CONTEXT,
         routes: Optional[str] = fn.ROUTES,
-        port: Optional[str] = fn.PORT
+        port: Optional[str] = fn.PORT,
+        no_routes: Optional[bool] = fn.NO_ROUTES
         ) -> None:
     fn.command(operation, context, opts=locals())
     return

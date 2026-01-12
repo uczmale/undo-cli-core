@@ -4,11 +4,8 @@ from unittest.mock import patch
 import tempfile
 from click import exceptions
 
-# test imports
-from tests import assert_utils 
-
 # project specific imports
-from undo.utils import dir_utils
+from undo.utils import test_utils
 
 # the module being tested
 from undo.commands.function import function_wrapper
@@ -31,8 +28,25 @@ class FunctionWrapperTestCase(unittest.TestCase):
         r = function_wrapper.wrapper(context)
 
         echo_tests = [ "port 8000", "Copy wrapper code", "export LOG_LEVEL",
+                        "handler/handler.py", "/undo/{identifier}",
                         "wrapper.py 8000", "Clean up" ]
-        assert_utils.assertEcho(self, echo_tests, mock_echo)
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+
+    @patch("subprocess.run")
+    @patch("typer.secho")
+    def test_command_function_wrapper_wrapper_args(self, mock_echo, mock_run):
+        context = Path("functions/undo_api_publisher")
+        routes = "/xndn/{identifier}"
+        port = 8080
+        no_routes=True
+        r = function_wrapper.wrapper(context, routes=routes,
+                                        port=port, no_routes=no_routes)
+
+        echo_tests = [ "port 8080", "Copy wrapper code", "export LOG_LEVEL",
+                        "wrapper.py 8080", "/xndn/{identifier}", "Clean up" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+        test_utils.assertNotEcho(self, ["/undo/{identifier}"], mock_echo)
 
 
     @patch("typer.secho")
@@ -95,17 +109,80 @@ class FunctionWrapperTestCase(unittest.TestCase):
         self.assertEqual(r, t, "Should've captured empty env list")
 
 
+    @patch("typer.secho")
+    def test_command_function_wrapper_extract_routes(self, mock_echo):
+        context = Path("functions/undo_api_publisher")
+        routes = "/undo /undo/{identifier}/xndo"
+        no_routes = False
+        r = function_wrapper.extract_routes(context, routes, no_routes)
+
+        t = [ "/undo", "/undo/{identifier}/xndo", "/undo/{identifier}" ]
+        self.assertEqual(r, t, "Should've combined paths to unique list")
+
+        echo_tests = [ "handler/handler.py", "/undo, /undo/{identifier}", "merged" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+
+    @patch("typer.secho")
+    def test_command_function_wrapper_extract_routes_no_routes(self, mock_echo):
+        context = Path("functions/undo_api_publisher")
+        routes = "/undo /undo/{identifier}/xndo"
+        no_routes = True
+        r = function_wrapper.extract_routes(context, routes, no_routes)
+
+        t = [ "/undo", "/undo/{identifier}/xndo" ]
+        self.assertEqual(r, t, "Should've combined paths to unique list")
+
+        echo_tests = [ "Skipping", "/undo, /undo/{identifier}" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        echo_tests = [ "handler/handler.py", "merged" ]
+        test_utils.assertNotEcho(self, echo_tests, mock_echo)
+
+
+    @patch("typer.secho")
+    def test_command_function_wrapper_extract_routes_no_handler(self, mock_echo):
+        context = Path("functions/undo_event_publisher")
+        routes = "/undo /undo/{identifier}/xndo"
+        no_routes = False
+        r = function_wrapper.extract_routes(context, routes, no_routes)
+
+        t = [ "/undo", "/undo/{identifier}/xndo" ]
+        self.assertEqual(r, t, "Should've combined paths to unique list")
+
+        echo_tests = [
+            "handler/handler.py", "No routes",
+            "Just using", "/undo, /undo/{identifier}"
+        ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        echo_tests = [ "Skipping.." ]
+        test_utils.assertNotEcho(self, echo_tests, mock_echo)
+
+
+    @patch("typer.secho")
+    def test_command_function_wrapper_extract_handler_routes(self, mock_echo):
+        context = Path("functions/undo_api_publisher")
+        r = function_wrapper.extract_handler_routes(context)
+
+        t = [ "/undo", "/undo/{identifier}" ]
+        self.assertEqual(r, t, "Should've extracted just the two unique path masks")
+
+        echo_tests = [ "handler/handler.py", "/undo, /undo/{identifier}" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+
     @patch("subprocess.run")
     @patch("typer.secho")
     def test_command_function_wrapper_run_process(self, mock_echo, mock_run):
         context = Path("functions/undo_api_publisher")
-        routes = "/note /note/{identifier}"
+        routes = [ "/note", "/note/{identifier}" ]
         port = 8080
         env_vars = { "LOG_LEVEL": "DEBUG" }
         r = function_wrapper.run_process(context, routes, port, env_vars)
 
         args, kwargs = mock_echo.call_args_list[3]
-        self.assertIn(routes, args[0], "Should've printed routes")
+        self.assertIn(" ".join(routes), args[0], "Should've printed routes")
         self.assertIn(str(port), args[0], "Should've printed port")
 
         args, kwargs = mock_run.call_args

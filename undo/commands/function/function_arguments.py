@@ -21,6 +21,11 @@ _routes = {
 }
 ROUTES = typer.Option(None, "--routes", **_routes)
 
+_routes = {
+    "help": "Prevents routes being inferred from handler/handler.py."
+}
+NO_ROUTES = typer.Option(False, "--no-auto-routes", **_routes)
+
 _port = {
     "help": "Override the default port if it is in use."
 }

@@ -5,9 +5,6 @@ from typer.testing import CliRunner
 from click import exceptions
 
 # project specific imports
-from undo.utils import dir_utils
-
-# project specific imports
 from undo import cli
 
 # the module being tested

@@ -2,9 +2,11 @@ import os, subprocess, shutil
 import typer
 from pathlib import Path
 
+from undo.commands.function.helpers import function_wrapper_route_parser
+
 CODE_TEXT_COLOUR = typer.colors.BRIGHT_BLACK
 
-def wrapper(context, routes=None, port=8000):
+def wrapper(context, routes=None, port=8000, no_routes=False):
     # say tell and what you're doing
     intro_text(routes, port)
 
@@ -13,6 +15,9 @@ def wrapper(context, routes=None, port=8000):
 
     # get the env vars from environment.txt
     env_vars = extract_env_vars(context)
+
+    # get the routes automatically from handler.py, unless explicitly overriden
+    routes = extract_routes(context, routes, no_routes)
 
     # actually start the wrapper server
     run_process(context, routes, port, env_vars)
@@ -70,6 +75,50 @@ def extract_env_vars(context, env_file="environment.txt"):
     return env_vars
 
 
+def extract_routes(context, routes=None, no_routes=False):
+    # routes come in as a string --routes '/undo /undo/{identifier}'
+    routes = [ route.strip() for route in routes.split() ] if routes else []
+
+    # if they've not set --no-auto-routes (no_routes) then try to get routes from handler
+    if not no_routes:
+        route_list = extract_handler_routes(context)
+
+        if routes and route_list:
+            routes = list(dict.fromkeys(routes + route_list))
+            typer.secho(f"Extracted merged with param routes: " + ", ".join(route_list))
+        elif route_list:
+            routes = route_list
+        else:
+            typer.secho(f"Just using parameter routes: " + ", ".join(routes))
+    else:
+        typer.secho(f"Skipping auto-extract from handler.py..")
+
+        if routes:
+            typer.secho(f"Using parameter routes: " + ", ".join(routes))
+
+    return routes
+
+
+def extract_handler_routes(context):
+    # i mean, this does all the heavy lifting, go look at that
+    visitor = function_wrapper_route_parser.RouteVisitor()
+
+    # assume the routes are the handler file, right? right?
+    typer.secho(f"\nExtracting routes from handler/handler.py...")
+    visitor.parse_handler(context / "handler/handler.py")
+    
+    # then, with the routes returned, just get the /path/mask
+    # and then use the list(dict.fromkeys()) thing to dedupe the list
+    route_list = list(dict.fromkeys([r.split()[1].strip() for r in visitor.route_list]))
+
+    if len(route_list) > 0:
+        typer.secho(f"Extracted {len(route_list)} routes: " + ", ".join(route_list))
+    else:
+        typer.secho(f"No routes auto-detected in handler.py. Check your standards.")
+
+    return route_list
+
+
 def run_process(context, routes=None, port=8000, env_vars={}):
     # activate the venv and run the wrapper
     typer.secho(f"\nActivate virtual environment:")
@@ -78,7 +127,7 @@ def run_process(context, routes=None, port=8000, env_vars={}):
     # activate the venv and run the wrapper with the supplied args
     command_args = [ ".venv/bin/python", "wrapper.py", str(port) ]
     if routes:
-        command_args = command_args + [ route.strip() for route in routes.split() ]
+        command_args = command_args + routes
 
     typer.secho(f"\nRun the wrapper script:")
     typer.secho(f"\tpython3 {' '.join(command_args)}", fg=CODE_TEXT_COLOUR)

@@ -5,16 +5,12 @@ from typer.testing import CliRunner
 from click import exceptions
 
 # project specific imports
-from undo.utils import dir_utils
-
-# project specific imports
 from undo import cli
 
 # the module being tested
 from undo.commands.function import function
 
-runner = CliRunner(mix_stderr=False)
-
+runner = CliRunner()
 
 class FunctionTestCase(unittest.TestCase):
     def setUp(self):
@@ -40,7 +36,7 @@ class FunctionTestCase(unittest.TestCase):
         echo_tests = [
             "Function undo-api-publisher selected..",
             "\tsource .venv/bin/activate",
-            "wrapper.py 8080 /undo\n"
+            "wrapper.py 8080 /undo "
         ]
         for t in echo_tests:
             self.assertIn(t, r.output, "Should have spat out text based on input")

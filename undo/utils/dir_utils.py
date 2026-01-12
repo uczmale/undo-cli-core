@@ -31,7 +31,6 @@ def get_execution_directory(cwd=None):
 
 def get_command_directory(dir_name, dir_type):
     command_dir = get_execution_directory() / dir_name
-    print(command_dir.resolve())
 
     if not command_dir.exists():
         typer.secho(f"There's are no {dir_type}s defined.", fg=typer.colors.RED)

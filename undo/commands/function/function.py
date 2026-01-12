@@ -23,7 +23,10 @@ def command(operation, context_search=None, opts={}) -> None:
     typer.secho(f"\tcd {context}", fg=CODE_TEXT_COLOUR)
 
     if operation == "wrapper":
-        function_wrapper.wrapper(context, routes=opts.get("routes"), port=opts.get("port"))
+        function_wrapper.wrapper(context,
+                                    routes=opts.get("routes"),
+                                    port=opts.get("port"),
+                                    no_routes=opts.get("no_routes"))
 
     if operation == "properties":
         function_misc.properties(context)

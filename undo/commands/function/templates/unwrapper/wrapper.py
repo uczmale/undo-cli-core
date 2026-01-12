@@ -17,7 +17,7 @@ import urllib
 from easiutils import request
 from handler import handler
 
-class EASIHandler(http.server.SimpleHTTPRequestHandler):
+class UnHandler(http.server.SimpleHTTPRequestHandler):
     @classmethod
     def define_paths(cls, args):
         # define the path set up front eh? probs should be in the class but in a sec
@@ -130,7 +130,7 @@ class EASIHandler(http.server.SimpleHTTPRequestHandler):
 
     def process_request(self):
         logger.debug("--------------------------------------")
-        logger.info("START EASIHandler event")
+        logger.info("START UnHandler event")
 
         # extract the request
         headers = {}
@@ -214,7 +214,7 @@ class EASIHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(resp["body"].encode("utf-8"))
-        logger.info("END EASIHandler event")
+        logger.info("END UnHandler event")
         logger.debug("--------------------------------------")
 
 
@@ -254,13 +254,13 @@ def main():
     PORT = (int(sys.argv[1])
             if len(sys.argv) > 1 and isinstance(sys.argv[1], str) else 8000)
 
-    EASIHandler.define_paths(sys.argv[2:])
-    Handler = EASIHandler
+    UnHandler.define_paths(sys.argv[2:])
+    Handler = UnHandler
 
     print(f"\n\033[0;32mStarting http://0.0.0.0:{PORT}\033[0m")
-    if EASIHandler.path_set:
+    if UnHandler.path_set:
         print("Mapping routes for following path masks (for all methods):")
-        for path in EASIHandler.path_set:
+        for path in UnHandler.path_set:
             print(f"\t- {path['key']}")
     else:
         print ("\033[90m[NOTE: No routes mapped, "

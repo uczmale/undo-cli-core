@@ -1,0 +1,2 @@
+git+ssh://git@github.com/ucl-isd/easikit-python-utils.git@v2#egg=easiutils
+pyjwt

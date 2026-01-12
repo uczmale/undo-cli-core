@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "undn-undo-cli"
+version = "0.1.0"
+authors = [
+  { name="LXSelect", email="mk@undn.co.uk" },
+]
+description = "A unified namspace for development operation."
+requires-python = ">=3.8"
+dependencies = [
+  "typer==0.3.2",
+  "colorama==0.4.4",
+  "shellingham==1.4.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["undo*"]
+
+[project.scripts]
+undo = "undo.cli:app"
+
+[project.optional-dependencies]

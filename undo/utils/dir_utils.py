@@ -55,7 +55,7 @@ def get_fuzzy_subdirectory(main_directory, subdir_mask, search_type, raise_error
         # needs to be exactly one asterisk for wildcard
         # two asterisks start to do multi-level searches - which we don't want
         # three asterisks cause an error
-        context_search = re.sub("\*+", "*", ("*" +  subdir_mask + "*"))
+        context_search = re.sub(r"\*+", "*", ("*" +  subdir_mask + "*"))
         search_rslt = list(main_directory.glob(context_search))
 
         if len(search_rslt) > 1:

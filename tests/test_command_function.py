@@ -4,9 +4,6 @@ from unittest.mock import patch
 from typer.testing import CliRunner
 from click import exceptions
 
-# project specific imports
-from undo import cli
-
 # the module being tested
 from undo.commands.function import function
 
@@ -25,8 +22,8 @@ class FunctionTestCase(unittest.TestCase):
     @patch("subprocess.run")
     @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
     def test_command_function_command_wrapper(self, mock_run):
-        r = runner.invoke(cli.app,
-                            ["function", "wrapper", "api",
+        r = runner.invoke(function.app,
+                            ["wrapper", "api",
                                 "--routes", "/undo",
                                 "--port", "8080"],
                             catch_exceptions=False)
@@ -45,8 +42,8 @@ class FunctionTestCase(unittest.TestCase):
     @patch("subprocess.run")
     @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
     def test_command_function_command_properties(self, mock_run):
-        r = runner.invoke(cli.app,
-                            ["function", "properties", "event"],
+        r = runner.invoke(function.app,
+                            ["properties", "event"],
                             catch_exceptions=False)
 
         self.assertEqual(r.exit_code, 0, "Should have returned 0 exit code")

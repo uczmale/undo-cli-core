@@ -6,6 +6,8 @@ from undo.commands.function.helpers import function_wrapper_route_parser
 
 CODE_TEXT_COLOUR = typer.colors.BRIGHT_BLACK
 
+help_text = "Run a wrapper which lets you access your API locally"
+
 def wrapper(context, routes=None, port=8000, no_routes=False):
     # say tell and what you're doing
     intro_text(routes, port)

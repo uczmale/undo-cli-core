@@ -17,7 +17,7 @@ Run the CLI as a a CLI you can run from anywhere in this folder using the comman
 
         # install the package in editable mode
         source .venv/bin/activate
-        python -m pip install -e .
+        python3 -m pip install -e .
 
         # check it worked
         undn --version

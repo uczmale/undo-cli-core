@@ -1,0 +1,3 @@
+# colours
+CODE_TEXT_COLOUR = typer.colors.BRIGHT_BLACK
+INFO_TEXT_COLOUR = typer.colors.BRIGHT_YELLOW

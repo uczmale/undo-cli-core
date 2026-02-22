@@ -4,11 +4,24 @@ from typing_extensions import Annotated
 
 config = {
     "context_search": Annotated[str, typer.Argument(
-        metavar="FRONTEND_NAME",
+        metavar="CONTAINER_NAME",
         show_default=False,
-        help="The name of the frontend or the smallest unique part"
+        help="The name of container for the database (often just the app name + db)"
     )],
-    "run": {
-        "help": "Run the React app locally with the dev environment variables"
+    "start": {
+        "container_search": Annotated[str, typer.Argument(
+            metavar="CONTAINER_NAME",
+            show_default=False,
+            help="The name of container for the database (often just the app name + db)"
+        )],
+        "help": "Start the container of the database"
+    },
+    "stop": {
+        "container_search": Annotated[str, typer.Argument(
+            metavar="CONTAINER_NAME",
+            show_default=False,
+            help="The name of container for the database (often just the app name + db)"
+        )],
+        "help": "Stop the container of the database"
     }
 }

@@ -4,6 +4,7 @@ import typer
 # undo specific imports
 from undo.utils import dir_utils
 from undo.commands.frontend.frontend_arguments import config
+from undo.commands.frontend import frontend_misc
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -13,7 +14,7 @@ CODE_TEXT_COLOUR = typer.colors.BRIGHT_BLACK
 @app.command("run", help=config["run"]["help"])
 def run_command(context_search: config["context_search"] = "") -> None:
     command_dir, context = command(context_search)
-    run(context)
+    frontend_misc.run(context)
     return
 
 
@@ -30,12 +31,6 @@ def command(context_search) -> None:
 
     return command_dir, context
 
-
-def run(context):
-    typer.secho(f"\nRunning dev React instance:")
-    typer.secho(f"\tnpm run dev", fg=CODE_TEXT_COLOUR)
-    
-    subprocess.run("npm run dev", shell=True, cwd=context)
 
 
 # callback to force single command app to still require command

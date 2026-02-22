@@ -1,3 +1,7 @@
+import typer
+
 # colours
+ERRR_TEXT_COLOUR = typer.colors.RED
+WARN_TEXT_COLOUR = typer.colors.BLUE
 CODE_TEXT_COLOUR = typer.colors.BRIGHT_BLACK
 INFO_TEXT_COLOUR = typer.colors.BRIGHT_YELLOW

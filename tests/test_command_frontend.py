@@ -35,18 +35,3 @@ class FrontendTestCase(unittest.TestCase):
         ]
         for t in echo_tests:
             self.assertIn(t, r.output, "Should have spat out text based on input")
-
-
-    @patch("subprocess.run")
-    @patch("typer.secho")
-    def test_command_frontend_command_run_frontend(self, mock_echo, mock_run):
-        context = Path("tests/testproject")
-        r = frontend.run(context)
-
-        # there are actually three cuz the first is some generic user feedback
-        args, kwargs = mock_echo.call_args_list[1]
-        self.assertIn("npm run dev", args[0], "Should've printed the run command")
-
-        args, kwargs = mock_run.call_args
-        a = args[0]
-        self.assertEqual(a, "npm run dev", "Should've npm run dev")

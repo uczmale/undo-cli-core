@@ -16,11 +16,12 @@ class DatabaseMiscTestCase(unittest.TestCase):
     def setUp(self):
         # start the session in the mock project folder
         self.reset_cwd = os.getcwd()
+        self.password = "existing_password_123"
         os.chdir("tests/testproject")
 
     def tearDown(self):
         # reset to where we ran this test from, since we chdir a bunch
-        Path(".vault/db_password").write_text("existing_password_123")
+        Path(".vault/db_password").write_text(self.password)
         os.chdir(self.reset_cwd)
 
 
@@ -66,6 +67,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
         t = Path(".vault/db_password").read_text()
         self.assertEqual(t, password, "Password file should've been updated")
+        self.assertEqual(r, password, "Should've returned new password")
 
 
     @patch("typer.confirm")
@@ -84,7 +86,8 @@ class DatabaseMiscTestCase(unittest.TestCase):
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_password").read_text()
-        self.assertNotEqual(t, password, "Password file shouldn't've been updated")
+        self.assertEqual(t, self.password, "Password file shouldn't've been updated")
+        self.assertEqual(r, self.password, "Should've returned original password")
 
 
     @patch("typer.confirm")
@@ -111,3 +114,4 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
         t = Path(".vault/db_password").read_text()
         self.assertEqual(t, new_password, "Password file should've been updated")
+        self.assertEqual(r, new_password, "Should've returned new password")

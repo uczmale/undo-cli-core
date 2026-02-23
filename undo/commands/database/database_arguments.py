@@ -8,6 +8,7 @@ config = {
         show_default=False,
         help="The name of container for the database (often just the app name + db)"
     )],
+
     "create": {
         "database_name": Annotated[str, typer.Argument(
             metavar="DATABASE_NAME",
@@ -26,6 +27,7 @@ config = {
         )],
         "help": "Create a container in which to house a database"
     },
+
     "secret": {
         "password": Annotated[str, typer.Option(
             "--password", "-p",
@@ -42,8 +44,9 @@ config = {
             "--decrypt", "-d",
             help="Print the password stored in the vault plain text to screen"
         )],
-        "help": "Create a container in which to house a database"
+        "help": "Create or update the master admin password for the database"
     },
+
     "start": {
         "container_search": Annotated[str, typer.Argument(
             metavar="CONTAINER_NAME",
@@ -52,6 +55,7 @@ config = {
         )],
         "help": "Start the container of the database"
     },
+
     "stop": {
         "container_search": Annotated[str, typer.Argument(
             metavar="CONTAINER_NAME",

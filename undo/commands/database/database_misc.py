@@ -35,16 +35,17 @@ def upsert_secret(password=None, hide_input=True):
                 + "do you want to overwrite it?"
 
         typer.secho("\nCHECK", fg=const.WARN_TEXT_COLOUR)
-        password_check = typer.confirm(echo, abort=True)
+        password_check = typer.confirm(echo)
 
         if password_check:
             password_file.write_text(password)
             typer.secho("\nPassword updated!", fg=const.SCSS_TEXT_COLOUR)
         else:
+            password = existing_password
             typer.secho("\nPassword left alone!", fg=const.INFO_TEXT_COLOUR)
 
     else:
         password_file.write_text(password)
         typer.secho("\nPassword added!", fg=const.SCSS_TEXT_COLOUR)
 
-    return
+    return password

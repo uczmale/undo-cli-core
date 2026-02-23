@@ -4,23 +4,110 @@ from unittest.mock import patch
 from typer.testing import CliRunner
 from click import exceptions
 
+# project specific imports
+from undo.utils import test_utils
+
 # the module being tested
 from undo.commands.database import database_misc
 
 runner = CliRunner()
 
-class FrontendTestCase(unittest.TestCase):
+class DatabaseMiscTestCase(unittest.TestCase):
     def setUp(self):
-        pass
+        # start the session in the mock project folder
+        self.reset_cwd = os.getcwd()
+        os.chdir("tests/testproject")
+
+    def tearDown(self):
+        # reset to where we ran this test from, since we chdir a bunch
+        Path(".vault/db_password").write_text("existing_password_123")
+        os.chdir(self.reset_cwd)
+
 
     @patch("subprocess.run")
     @patch("typer.secho")
-    def test_command_database_misc_start(self, mock_echo, mock_run):
+    def test_command_database_misc_docker_command(self, mock_echo, mock_run):
+        command = "start"
         container_name = "undodb"
-        r = database_misc.start(container_name)
+        r = database_misc.docker_command(command, container_name)
 
-        # there are actually three cuz the first is some generic user feedback
         args, kwargs = mock_run.call_args
         a = args[0]
-        t = f"docker start {container_name}"
+        t = f"docker {command} {container_name}"
         self.assertEqual(a, t, "Should've started the container")
+
+
+    @patch("typer.secho")
+    def test_command_database_misc_docker_command_bad_command(self, mock_echo):
+        command = "xyz"
+        container_name = "undo"
+
+        with self.assertRaises(exceptions.Exit) as context:
+            r = database_misc.docker_command(command, container_name)
+
+        echo_tests = [ f"The command {command} is not supported;" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+
+    @patch("typer.confirm")
+    @patch("typer.secho")
+    def test_command_database_misc_upsert_secret_overwrite(self, mock_echo, mock_cnf):
+        mock_cnf.return_value = True
+
+        password = "new_password_789"
+        hide_input = True
+        r = database_misc.upsert_secret(password, hide_input)
+
+        echo_tests = [ f"You already have a password (ex*****23)" ]
+        test_utils.assertEcho(self, echo_tests, mock_cnf)
+
+        echo_tests = [ "\nPassword updated!" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        t = Path(".vault/db_password").read_text()
+        self.assertEqual(t, password, "Password file should've been updated")
+
+
+    @patch("typer.confirm")
+    @patch("typer.secho")
+    def test_command_database_misc_upsert_secret_no_overwrite(self, mock_echo, mock_cnf):
+        mock_cnf.return_value = False
+
+        password = "new_password_789"
+        hide_input = True
+        r = database_misc.upsert_secret(password, hide_input)
+
+        echo_tests = [ f"You already have a password (ex*****23)" ]
+        test_utils.assertEcho(self, echo_tests, mock_cnf)
+
+        echo_tests = [ "\nPassword left alone!" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        t = Path(".vault/db_password").read_text()
+        self.assertNotEqual(t, password, "Password file shouldn't've been updated")
+
+
+    @patch("typer.confirm")
+    @patch("typer.prompt")
+    @patch("typer.secho")
+    def test_command_database_misc_upsert_secret_no_file(self,
+                                                mock_echo, mock_pmt, mock_cnf):
+        Path(".vault/db_password").unlink()
+        mock_pmt.return_value = new_password = "entered_password_555"
+        mock_cnf.return_value = True
+
+        password = None
+        hide_input = True
+        r = database_misc.upsert_secret(password, hide_input)
+
+        echo_tests = [ "Enter the main admin password" ]
+        test_utils.assertEcho(self, echo_tests, mock_pmt)
+
+        echo_tests = [ "You already have a password", "Password updated!" ]
+        test_utils.assertNotEcho(self, echo_tests, mock_echo)
+
+        echo_tests = [ "Password added!" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        t = Path(".vault/db_password").read_text()
+        self.assertEqual(t, new_password, "Password file should've been updated")

@@ -8,12 +8,12 @@ from undo.utils import dir_utils, secret_utils
 from undo.commands.database import database_misc
 
 
-def init(script_path, env, host="127.0.0.1"):
+def init(env, host="127.0.0.1", script_path=".vault/db_password"):
     # start setting up the placeholder map
     placeholder_mapping = [("<ENV>", env)]
 
     # get the admin password and add it to that map
-    password_path = Path(".vault/db_password")
+    password_path = Path(script_path)
     admin_password = secret_utils.get_secret(password_path)
     placeholder_mapping.append(("ADMIN_PASSWORD", admin_password))
 
@@ -55,6 +55,7 @@ def update_script(script_path, placeholder_mapping):
     updated_script_path.write_text(updated_script)
 
     return updated_script_path
+
 
 def run_script(script_path, host, password):
     # pass the tmp script

@@ -21,6 +21,16 @@ def create_command(database_name: config["create"]["database_name"],
     return
 
 
+@app.command("init", help=config["init"]["help"])
+def create_command(environment: config["init"]["environment"] = ...,
+                    host: config["init"]["host"] = "127.0.0.1",
+                    script_path: config["init"]["script_path"]
+                        = ".vault/db_password") -> None:
+
+    database_create.init(env=environment, host=host, script_path=script_path)
+    return
+
+
 @app.command("secret", help=config["secret"]["help"])
 def secret_command(password: config["create"]["password"] = None,
                     show_password: config["create"]["show_password"] = False) -> None:

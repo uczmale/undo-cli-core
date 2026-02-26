@@ -32,6 +32,25 @@ config = {
         "help": "Create a container in which to house a database"
     },
 
+    "init": {
+        "environment": Annotated[str, typer.Option(
+            metavar="TARGET",
+            show_default=False,
+            help="Genreally the environment but potentially the database's target"
+        )],
+        "host": Annotated[str, typer.Option(
+            "--host", "-h"
+            metavar="DATABASE_NAME",
+            show_default=False,
+            help="The host address of the database"
+        )],
+        "script_path": Annotated[bool, typer.Option(
+            "--script-path", "-s",
+            help="Skip password if one already exists"
+        )],
+        "help": "Run the initialisation script to create the core new database"
+    },
+
     "secret": {
         "password": Annotated[str, typer.Option(
             "--password", "-p",

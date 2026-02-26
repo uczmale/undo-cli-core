@@ -9,7 +9,7 @@ from undo.commands.frontend import frontend_misc
 
 runner = CliRunner()
 
-class FrontendTestCase(unittest.TestCase):
+class FrontendMiscTestCase(unittest.TestCase):
     def setUp(self):
         pass
 

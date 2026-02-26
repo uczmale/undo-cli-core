@@ -18,6 +18,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         self.reset_cwd = os.getcwd()
         self.password = "existing_password_123"
         os.chdir("tests/testproject")
+        Path(".vault/db_password").write_text(self.password)
 
     def tearDown(self):
         # reset to where we ran this test from, since we chdir a bunch
@@ -52,17 +53,17 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
     @patch("typer.confirm")
     @patch("typer.secho")
-    def test_command_database_misc_upsert_secret_overwrite(self, mock_echo, mock_cnf):
+    def test_command_database_misc_upsert_password_overwrite(self, mock_echo, mock_cnf):
         mock_cnf.return_value = True
 
         password = "new_password_789"
         hide_input = True
-        r = database_misc.upsert_secret(password, hide_input)
+        r = database_misc.upsert_password(password, hide_input)
 
-        echo_tests = [ f"You already have a password (ex*****23)" ]
+        echo_tests = [ f"You already have a secret (ex*****23)" ]
         test_utils.assertEcho(self, echo_tests, mock_cnf)
 
-        echo_tests = [ "\nPassword updated!" ]
+        echo_tests = [ "\nSecret updated!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_password").read_text()
@@ -72,17 +73,17 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
     @patch("typer.confirm")
     @patch("typer.secho")
-    def test_command_database_misc_upsert_secret_no_overwrite(self, mock_echo, mock_cnf):
+    def test_command_database_misc_upsert_password_no_overwrite(self, mock_echo, mock_cnf):
         mock_cnf.return_value = False
 
         password = "new_password_789"
         hide_input = True
-        r = database_misc.upsert_secret(password, hide_input)
+        r = database_misc.upsert_password(password, hide_input)
 
-        echo_tests = [ f"You already have a password (ex*****23)" ]
+        echo_tests = [ f"You already have a secret (ex*****23)" ]
         test_utils.assertEcho(self, echo_tests, mock_cnf)
 
-        echo_tests = [ "\nPassword left alone!" ]
+        echo_tests = [ "\nSecret left alone!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_password").read_text()
@@ -93,7 +94,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
     @patch("typer.confirm")
     @patch("typer.prompt")
     @patch("typer.secho")
-    def test_command_database_misc_upsert_secret_no_file(self,
+    def test_command_database_misc_upsert_password_no_file(self,
                                                 mock_echo, mock_pmt, mock_cnf):
         Path(".vault/db_password").unlink()
         mock_pmt.return_value = new_password = "entered_password_555"
@@ -101,17 +102,37 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
         password = None
         hide_input = True
-        r = database_misc.upsert_secret(password, hide_input)
+        r = database_misc.upsert_password(password, hide_input)
 
-        echo_tests = [ "Enter the main admin password" ]
+        echo_tests = [ "Enter the database admin secret" ]
         test_utils.assertEcho(self, echo_tests, mock_pmt)
 
-        echo_tests = [ "You already have a password", "Password updated!" ]
+        echo_tests = [ "You already have a secret", "Secret updated!" ]
         test_utils.assertNotEcho(self, echo_tests, mock_echo)
 
-        echo_tests = [ "Password added!" ]
+        echo_tests = [ "Secret added!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_password").read_text()
         self.assertEqual(t, new_password, "Password file should've been updated")
         self.assertEqual(r, new_password, "Should've returned new password")
+
+
+    @patch("typer.confirm")
+    @patch("typer.prompt")
+    @patch("typer.secho")
+    def test_command_database_misc_upsert_password_skip_exists(self,
+                                                mock_echo, mock_pmt, mock_cnf):
+        mock_pmt.return_value = new_password = "entered_password_555"
+        mock_cnf.return_value = True
+
+        password = None
+        hide_input = True
+        r = database_misc.upsert_password(password, hide_input, skip_exists=True)
+
+        echo_tests = [ "Retrieving existing secret [ex*****23]..." ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+        self.assertEqual(r, self.password, "Should've returned existing password")
+
+        t = Path(".vault/db_password").read_text()
+        self.assertEqual(t, self.password, "Password file shouldn't've been updated")

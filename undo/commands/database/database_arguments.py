@@ -23,7 +23,11 @@ config = {
         )],
         "show_password": Annotated[bool, typer.Option(
             "--show-password", "-s",
-            help="Set this if you want to show the password when typing it"
+            help="Show the password when typing it"
+        )],
+        "skip_password": Annotated[bool, typer.Option(
+            "--skip-password", "-k",
+            help="Skip password if one already exists"
         )],
         "help": "Create a container in which to house a database"
     },

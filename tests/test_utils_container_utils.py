@@ -12,7 +12,7 @@ from undo.utils import container_utils
 
 runner = CliRunner()
 
-class DatabaseTestCase(unittest.TestCase):
+class ContainerUtilsTestCase(unittest.TestCase):
     def setUp(self):
         pass
 

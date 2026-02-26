@@ -5,6 +5,7 @@ import typer
 from undo.utils import const
 from undo.utils import container_utils
 from undo.commands.database.database_arguments import config
+from undo.commands.database import database_create
 from undo.commands.database import database_misc
 
 app = typer.Typer(no_args_is_help=True)
@@ -15,8 +16,8 @@ def create_command(database_name: config["create"]["database_name"],
                     password: config["create"]["password"] = None,
                     show_password: config["create"]["show_password"] = False) -> None:
 
-    database_misc.create_container(database_name, password=password,
-                                        hide_input=(not show_password))
+    database_create.create(database_name,
+                                password=password, hide_input=(not show_password))
     return
 
 
@@ -24,7 +25,7 @@ def create_command(database_name: config["create"]["database_name"],
 def secret_command(password: config["create"]["password"] = None,
                     show_password: config["create"]["show_password"] = False) -> None:
 
-    database_misc.upsert_secret(password=password, hide_input=(not show_password))
+    database_misc.upsert_password(password=password, hide_input=(not show_password))
     return
 
 

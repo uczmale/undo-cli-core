@@ -1,19 +1,19 @@
-CREATE DATABASE IF NOT EXISTS spotlight_<ENV>;
+CREATE DATABASE IF NOT EXISTS undo_<ENV>;
 
-CREATE USER IF NOT EXISTS spotlight_admin_<ENV> IDENTIFIED BY '<ADMIN_PASSWORD>';
-GRANT ALL PRIVILEGES ON spotlight_<ENV>.* TO spotlight_admin_<ENV>;
+CREATE USER IF NOT EXISTS undo_admin_<ENV> IDENTIFIED BY '<ADMIN_PASSWORD>';
+GRANT ALL PRIVILEGES ON undo_<ENV>.* TO undo_admin_<ENV>;
 
-ALTER USER spotlight_admin_<ENV> IDENTIFIED WITH mysql_native_password
+ALTER USER undo_admin_<ENV> IDENTIFIED WITH mysql_native_password
 BY '<ADMIN_PASSWORD>';
 
-CREATE USER IF NOT EXISTS spotlight_user_<ENV> IDENTIFIED BY '<USER_PASSWORD>';
-ALTER USER spotlight_user_<ENV> IDENTIFIED WITH mysql_native_password
+CREATE USER IF NOT EXISTS undo_user_<ENV> IDENTIFIED BY '<USER_PASSWORD>';
+ALTER USER undo_user_<ENV> IDENTIFIED WITH mysql_native_password
 BY '<USER_PASSWORD>';
 
 FLUSH PRIVILEGES;
 
--- DROP TABLE spotlight_<ENV>.spotlight_t_shoutout;
-CREATE TABLE IF NOT EXISTS spotlight_<ENV>.spotlight_t_shoutout (
+-- DROP TABLE undo_<ENV>.undo_t_shoutout;
+CREATE TABLE IF NOT EXISTS undo_<ENV>.undo_t_command (
     identifier              INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     contributor_identifier  VARCHAR(10) NOT NULL,
     content                 TEXT NOT NULL,

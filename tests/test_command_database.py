@@ -26,7 +26,9 @@ class DatabaseTestCase(unittest.TestCase):
     @patch("subprocess.run")
     @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
     def test_command_database_command_create(self, mock_run):
-        Path(".vault/db_password").unlink(missing_ok=True)
+        password_path = Path(".vault/db_password")
+        password = password_path.read_text()
+        password_path.unlink(missing_ok=True)
 
         r = runner.invoke(database.app,
                             ["create", "undo"],
@@ -52,14 +54,12 @@ class DatabaseTestCase(unittest.TestCase):
         self.assertIn(t, a, "Should've given the container the correct name")
         
         # clean up
-        Path(".vault/db_password").unlink(missing_ok=True)
+        password_path.write_text(password)
 
 
     @patch("subprocess.run")
     @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
     def test_command_database_command_create_existing_password(self, mock_run):
-        Path(".vault/db_password").write_text("skip_password_exist")
-
         r = runner.invoke(database.app,
                             ["create", "undo"],
                             catch_exceptions=False)
@@ -81,9 +81,54 @@ class DatabaseTestCase(unittest.TestCase):
 
         t = f"--name undodb"
         self.assertIn(t, a, "Should've given the container the correct name")
-        
-        # clean up
-        Path(".vault/db_password").unlink(missing_ok=True)
+
+
+    @patch("subprocess.run")
+    @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
+    def test_command_database_command_init(self, mock_run):
+        env = "local"
+        host = "999.0.0.9"
+        script = "database/db_initialise.sql"
+        r = runner.invoke(database.app,
+                            ["init", "-e", env, "-h", host, "-s", script ],
+                            catch_exceptions=False)
+        # print(r.output)
+
+        self.assertEqual(r.exit_code, 0, "Should have returned 0 exit code")
+
+        echo_tests = [
+            "Update the temporary script", f"s/<ENV>/{env}/g",
+            "Run the updated script", f"--host {host}", "-pex*****23",
+        ]
+        for t in echo_tests:
+            self.assertIn(t, r.output, "Should have spat out text based on input")
+
+        args, kwargs = mock_run.call_args
+        a = args[0]
+        t = f"mysql --host {host}"
+        self.assertIn(t, a, "Should've tried to run the MySQL command")
+
+        t = f"< {script.replace("/", "/tmp/")}"
+        self.assertIn(t, a, "Should've passed in the correct script")
+
+
+    @patch("subprocess.run")
+    def test_command_database_command_statement(self, mock_run):
+        r = runner.invoke(database.app,
+                            ["statement", "SHOW TABLES", "-d", "undo"],
+                            catch_exceptions=False)
+        # print(r.output)
+
+        self.assertEqual(r.exit_code, 0, "Should have returned 0 exit code")
+
+        echo_tests = [
+            "Running database statement..",
+            "\tmysql --host 127.0.0.1",
+            "-D undo \\\n",
+            "-e \"SHOW TABLES\""
+        ]
+        for t in echo_tests:
+            self.assertIn(t, r.output, "Should have spat out text based on input")
 
 
     @patch("subprocess.run")

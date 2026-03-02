@@ -28,6 +28,28 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
     @patch("subprocess.run")
     @patch("typer.secho")
+    def test_command_database_misc_mysql_statement(self, mock_echo, mock_run):
+        statement = "SELECT * FROM dual"
+        database_name = "undo"
+        r = database_misc.mysql_statement(statement, database_name)
+
+        echo_tests = [ "Running database statement..",
+                       f"\n\t      -u root -p$(cat .vault/db_password)",
+                       f"-e \"{statement}\"",
+                       f"-D {database_name}" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        args, kwargs = mock_run.call_args
+        a = args[0]
+        t = "mysql --host 127.0.0.1 --port 3306 -u root -pexisting_password_123"
+        self.assertIn(t, a, "Should've connected to the database")
+
+        t = f"-D {database_name} -e \"{statement}\""
+        self.assertIn(t, a, "Should've run the command against the databata")
+
+
+    @patch("subprocess.run")
+    @patch("typer.secho")
     def test_command_database_misc_docker_command(self, mock_echo, mock_run):
         command = "start"
         container_name = "undodb"

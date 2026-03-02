@@ -34,21 +34,45 @@ config = {
 
     "init": {
         "environment": Annotated[str, typer.Option(
-            metavar="TARGET",
-            show_default=False,
+            "--environment", "-e",
             help="Genreally the environment but potentially the database's target"
         )],
         "host": Annotated[str, typer.Option(
-            "--host", "-h"
-            metavar="DATABASE_NAME",
-            show_default=False,
-            help="The host address of the database"
+            "--host", "-h",
+            help="The host address of the database container or, say, RDS instance"
         )],
-        "script_path": Annotated[bool, typer.Option(
+        "script_path": Annotated[str, typer.Option(
             "--script-path", "-s",
-            help="Skip password if one already exists"
+            help="The path of the script that is being executed to initialse"
         )],
-        "help": "Run the initialisation script to create the core new database"
+        "help": "Run the initialisation script to create the core database objects"
+    },
+
+    "release": {
+        "script_path": Annotated[str, typer.Argument(
+            help="The path of the script that is being executed to initialse"
+        )],
+        "environment": Annotated[str, typer.Option(
+            "--environment", "-e",
+            help="Genreally the environment but potentially the database's target"
+        )],
+        "host": Annotated[str, typer.Option(
+            "--host", "-h",
+            help="The host address of the database container or, say, RDS instance"
+        )],
+        "help": "Run a script into the database (init but for arbitrary scripts)"
+    },
+
+    "statement": {
+        "statement": Annotated[str, typer.Argument(
+            show_default=False,
+            help="The SQL statement to be run"
+        )],
+        "database_name": Annotated[str, typer.Option(
+            "--database", "-d",
+            help="The name of a database agaisnt which to run the statement"
+        )],
+        "help": "Run an SQL statement into the currently running database."
     },
 
     "secret": {

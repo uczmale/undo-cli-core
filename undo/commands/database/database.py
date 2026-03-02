@@ -5,8 +5,7 @@ import typer
 from undo.utils import const
 from undo.utils import container_utils
 from undo.commands.database.database_arguments import config
-from undo.commands.database import database_create
-from undo.commands.database import database_misc
+from undo.commands.database import database_create, database_release, database_misc
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -25,9 +24,27 @@ def create_command(database_name: config["create"]["database_name"],
 def create_command(environment: config["init"]["environment"] = ...,
                     host: config["init"]["host"] = "127.0.0.1",
                     script_path: config["init"]["script_path"]
-                        = ".vault/db_password") -> None:
+                        = "database/db_initialise.sql") -> None:
 
-    database_create.init(env=environment, host=host, script_path=script_path)
+    database_release.release(script_path=script_path, env=environment, host=host)
+    return
+
+
+@app.command("release", help=config["release"]["help"])
+def create_command(environment: config["release"]["environment"] = ...,
+                    script_path: config["release"]["script_path"] = ...,
+                    host: config["release"]["host"] = "127.0.0.1") -> None:
+
+    database_release.release(env=environment, host=host, script_path=script_path)
+    return
+
+
+@app.command("select", hidden=True)
+@app.command("statement", help=config["statement"]["help"])
+def secret_command(statement: config["statement"]["statement"] = "SHOW DATABASES",
+                    database_name: config["statement"]["database_name"] = None) -> None:
+
+    database_misc.mysql_statement(statement, database_name)
     return
 
 

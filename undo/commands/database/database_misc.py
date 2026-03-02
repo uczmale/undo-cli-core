@@ -7,6 +7,32 @@ from undo.utils import const
 from undo.utils import secret_utils
 
 
+default_database_host = "127.0.0.1"
+default_script_path = ".database/db_initialise.sql"
+default_username = "root"
+
+def mysql_statement(statement, database_name=None):
+    # get admin password
+    password_path = Path(".vault/db_password")
+    admin_password = secret_utils.get_secret(password_path)
+
+    # echo command
+    database_command = f"-D {database_name} " if database_name else ""
+    database_command_echo = f"\t      {database_command}\\\n" if database_name else ""
+    echo = f"\tmysql --host {default_database_host} --port 3306 \\\n" \
+           f"\t      -u {default_username} -p$(cat .vault/db_password) \\\n" \
+           f"{database_command_echo}" \
+           f"\t      -e \"{statement}\"\n"
+    typer.secho(f"Running database statement..")
+    typer.secho(echo, fg=const.CODE_TEXT_COLOUR)
+
+    command = f"mysql --host {default_database_host} --port 3306 " \
+              f"-u {default_username} -p{admin_password} {database_command}" \
+              f"-e \"{statement}\""
+    result = subprocess.run(command, shell=True)
+    return result
+
+
 def docker_command(command, container_name):
     if command not in ["start", "stop", "restart", "rm"]:
         typer.secho(f"The command {command} is not supported; " \

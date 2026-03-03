@@ -7,7 +7,7 @@ import typer
 from undo.utils import const
 
 
-def get_secret(secret_path):
+def get_secret(secret_path, *, show_error=False):
     secret = False
 
     if secret_path.exists():
@@ -18,6 +18,11 @@ def get_secret(secret_path):
         secret_plain_path = Path(secret_path.parent / ("_" + secret_path.name))
         if secret_plain_path.exists():
             secret = secret_file.read_text.strip()
+
+    if show_error and not secret:
+        typer.secho("\nRuh-roh!", fg=const.ERRR_TEXT_COLOUR)
+        typer.secho(f"No secret found at path: {secret_path}")
+        raise typer.Exit(1)
 
     return secret
 

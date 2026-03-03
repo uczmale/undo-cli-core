@@ -33,10 +33,28 @@ class SecretUtilsTestCase(unittest.TestCase):
 
     def test_utils_secret_utils_get_secret_unencrypted(self):
         secret_path = Path("functions/undo_event_publisher/secrets/_unencrypted_secret")
-        r = secret_utils.get_secret(secret_path)
+        r = secret_utils.get_secret(secret_path, show_error=True)
 
         t = "unencrypted_secret"
         self.assertEqual(r, t, "Should've returned 'unencrypted' secret")
+
+
+    def test_utils_secret_utils_get_secret_not_exists(self):
+        secret_path = Path("functions/undo_event_publisher/secrets/xyz")
+        r = secret_utils.get_secret(secret_path)
+
+        self.assertFalse(r, "Should've returned False as secret doesn't exist")
+
+
+    @patch("typer.secho")
+    def test_utils_secret_utils_get_secret_raise_error(self, mock_echo):
+        secret_path = Path("functions/undo_event_publisher/secrets/xyz")
+        
+        with self.assertRaises(exceptions.Exit) as context:
+            r = secret_utils.get_secret(secret_path, show_error=True)
+
+        echo_tests = [ "Ruh-roh!", "No secret found", "secrets/xyz" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
 
 
     @patch("typer.confirm")

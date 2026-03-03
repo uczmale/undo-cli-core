@@ -100,7 +100,7 @@ class DatabaseReleaseTestCase(unittest.TestCase):
         with self.assertRaises(exceptions.Exit) as context:
             r = database_release.password_mapping(placeholder_mapping, password_type)
 
-        echo_tests = [ "Eckers", "from .vault/db_init_password_xyz" ]
+        echo_tests = [ ".vault/db_init_password_xyz" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
 

@@ -108,7 +108,7 @@ class DatabaseTestCase(unittest.TestCase):
         t = f"mysql --host {host}"
         self.assertIn(t, a, "Should've tried to run the MySQL command")
 
-        t = f"< {script.replace("/", "/tmp/")}"
+        t = "< " + script.replace("/", "/tmp/")
         self.assertIn(t, a, "Should've passed in the correct script")
 
 

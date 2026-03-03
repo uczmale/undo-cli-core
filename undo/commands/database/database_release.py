@@ -18,7 +18,7 @@ def release(script_path, env, host=default_database_host):
 
     # get admin password
     password_path = Path(".vault/db_password")
-    admin_password = secret_utils.get_secret(password_path)
+    admin_password = secret_utils.get_secret(password_path, show_error=True)
 
     # get script path, including filler bits
     script_path = get_script_path(script_path)
@@ -67,11 +67,7 @@ def extract_placeholders(script_path):
 def password_mapping(placeholder_mapping, password_type):
     # get the admin password and add it to that map
     password_path = Path(f".vault/db_init_password_{password_type}")
-    password = secret_utils.get_secret(password_path)
-    if not password:
-        typer.secho("Eckers", fg=const.ERRR_TEXT_COLOUR)
-        typer.secho(f"Password couldn't be retrieved from {password_path}")
-        raise typer.Exit(1)
+    password = secret_utils.get_secret(password_path, show_error=True)
 
     placeholder_mapping.append((f"<{password_type.upper()}_PASSWORD>", password))
 
@@ -121,4 +117,5 @@ def run_script(script_path, host, username, password):
               f"-u {username} -p{password} < {script_path}"
     result = subprocess.run(command, shell=True)
 
+    typer.secho("\nWhoop! Script complete!", fg=const.SCSS_TEXT_COLOUR)
     return result

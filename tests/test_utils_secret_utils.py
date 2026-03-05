@@ -59,7 +59,7 @@ class SecretUtilsTestCase(unittest.TestCase):
 
     @patch("typer.confirm")
     @patch("typer.secho")
-    def test_command_secret_utils_upsert_secret_overwrite(self, mock_echo, mock_cnf):
+    def test_utils_secret_utils_upsert_secret_overwrite(self, mock_echo, mock_cnf):
         mock_cnf.return_value = True
 
         secret_path = ".vault/db_secret"
@@ -82,7 +82,7 @@ class SecretUtilsTestCase(unittest.TestCase):
 
     @patch("typer.confirm")
     @patch("typer.secho")
-    def test_command_secret_utils_upsert_secret_no_overwrite(self, mock_echo, mock_cnf):
+    def test_utils_secret_utils_upsert_secret_no_overwrite(self, mock_echo, mock_cnf):
         mock_cnf.return_value = False
 
         secret_path = ".vault/db_secret"
@@ -106,7 +106,7 @@ class SecretUtilsTestCase(unittest.TestCase):
     @patch("typer.confirm")
     @patch("typer.prompt")
     @patch("typer.secho")
-    def test_command_secret_utils_upsert_secret_no_file(self,
+    def test_utils_secret_utils_upsert_secret_no_file(self,
                                                 mock_echo, mock_pmt, mock_cnf):
         Path(".vault/db_secret").unlink()
         mock_pmt.return_value = new_secret = "entered_secret_555"
@@ -136,7 +136,7 @@ class SecretUtilsTestCase(unittest.TestCase):
     @patch("typer.confirm")
     @patch("typer.prompt")
     @patch("typer.secho")
-    def test_command_secret_utils_upsert_secret_skip_exists(self,
+    def test_utils_secret_utils_upsert_secret_skip_exists(self,
                                                 mock_echo, mock_pmt, mock_cnf):
         mock_pmt.return_value = new_secret = "entered_secret_555"
         mock_cnf.return_value = True
@@ -157,3 +157,14 @@ class SecretUtilsTestCase(unittest.TestCase):
 
         t = Path(".vault/db_secret").read_text()
         self.assertEqual(t, self.secret, "secret file shouldn't've been updated")
+
+    def test_utils_secret_utils_encrypt(self):
+        secret_path = "database/secrets/db_local_password_admin"
+        Path(secret_path).unlink(missing_ok=True)
+        secret = "vault_newly_encrypted"
+        r = secret_utils.encrypt(secret_path, secret)
+
+        t = Path(secret_path)
+        self.assertTrue(t.exists(), "Should've created the password")
+
+        Path(secret_path).unlink(missing_ok=True)

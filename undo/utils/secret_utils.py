@@ -1,6 +1,7 @@
 import os, sys
 from pathlib import Path
 
+from ansible.parsing.vault import VaultSecret, VaultLib
 import typer
 
 # undo specific imports
@@ -76,3 +77,20 @@ def upsert_secret(secret_path=None, secret=None, *,
 
     # return the secret we decided was this secret
     return secret
+
+
+def encrypt(secret_path, secret, *, key_path=".vault/vault-pass.txt"):
+    key_path = Path(key_path)
+    if not key_path.exists():
+        raise Typer.Exit(1)
+
+    secret_path = Path(secret_path)
+    if not secret_path.parent.exists():
+        raise Typer.Exit(1)
+
+    vault_key_text = Path(key_path).read_text().strip()
+    vault_key = VaultSecret(vault_key_text)
+    vault = VaultLib(vault_key)
+    encrypted_secret = vault.encrypt(secret)
+
+    Path(secret_path).write_text(secret_path)

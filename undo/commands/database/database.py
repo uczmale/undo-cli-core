@@ -21,7 +21,7 @@ def create_command(database_name: config["create"]["database_name"],
 
 
 @app.command("init", help=config["init"]["help"])
-def create_command(environment: config["init"]["environment"] = ...,
+def init_command(environment: config["init"]["environment"] = ...,
                     host: config["init"]["host"] = "127.0.0.1",
                     script_path: config["init"]["script_path"]
                         = "database/db_initialise.sql") -> None:
@@ -31,7 +31,7 @@ def create_command(environment: config["init"]["environment"] = ...,
 
 
 @app.command("release", help=config["release"]["help"])
-def create_command(environment: config["release"]["environment"] = ...,
+def release_command(environment: config["release"]["environment"] = ...,
                     script_path: config["release"]["script_path"] = ...,
                     host: config["release"]["host"] = "127.0.0.1") -> None:
 
@@ -41,7 +41,7 @@ def create_command(environment: config["release"]["environment"] = ...,
 
 @app.command("select", hidden=True)
 @app.command("statement", help=config["statement"]["help"])
-def secret_command(statement: config["statement"]["statement"] = "SHOW DATABASES",
+def statement_command(statement: config["statement"]["statement"] = "SHOW DATABASES",
                     database_name: config["statement"]["database_name"] = None) -> None:
 
     database_misc.mysql_statement(statement, database_name)

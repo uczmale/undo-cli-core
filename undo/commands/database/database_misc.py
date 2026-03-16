@@ -47,8 +47,18 @@ def docker_command(command, container_name):
     return result
 
 
-def upsert_password(password=None, hide_input=True, skip_exists=False):
-    password_file = Path(".vault/db_password")
+def upsert_password(password=None, *, env="local", user_type="root",
+                            hide_input=True, skip_exists=False):
+    
+    # set up the database specific password path and create it if it doesn't exist
+    # this is probably happening during database create command after all
+    password_path = Path(f"database/release/{env}/")
+    password_path.mkdir(parents=True, exist_ok=True)
+
+    # put it all together and what have you got
+    password_file = Path(password_path / f"db_password_{user_type}")
+
+    # ding dong, password
     password = secret_utils.upsert_secret(password_file, password,
                                                 hide_input=hide_input,
                                                 skip_exists=skip_exists,

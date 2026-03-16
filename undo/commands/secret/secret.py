@@ -11,7 +11,7 @@ app = typer.Typer(no_args_is_help=True)
 
 
 @app.command("generate", help=config["generate"]["help"])
-def create_command(characters: config["generate"]["characters"] = 42) -> None:
+def create_command(characters: config["generate"]["characters"] = 38) -> None:
 
     secret_misc.generate_secret(chars=characters, include_symbols=True)
     return

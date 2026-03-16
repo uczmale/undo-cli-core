@@ -3,6 +3,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 from click import exceptions
+from ansible.parsing.vault import VaultLib
 
 # project specific imports
 from undo.utils import test_utils
@@ -158,13 +159,44 @@ class SecretUtilsTestCase(unittest.TestCase):
         t = Path(".vault/db_secret").read_text()
         self.assertEqual(t, self.secret, "secret file shouldn't've been updated")
 
+
+    def test_utils_secret_utils_get_vault(self):
+        # assume default key of tests/testproject/.vault/vault-pass.txt
+        r = secret_utils.get_vault()
+
+        self.assertIsInstance(r, VaultLib, "Should've returnd vault library object")
+
+
+    def test_utils_secret_utils_get_vault_missing(self):
+        with self.assertRaises(exceptions.Exit) as context:
+            key_path = ".vault/non-existent.txt"
+            r = secret_utils.get_vault(key_path)
+
+
     def test_utils_secret_utils_encrypt(self):
         secret_path = "database/secrets/db_local_password_admin"
         Path(secret_path).unlink(missing_ok=True)
         secret = "vault_newly_encrypted"
         r = secret_utils.encrypt(secret_path, secret)
 
-        t = Path(secret_path)
-        self.assertTrue(t.exists(), "Should've created the password")
+        self.assertTrue(r.exists(), "Should've created the password file")
 
         Path(secret_path).unlink(missing_ok=True)
+
+
+    def test_utils_secret_utils_decrypt(self):
+        # previously encrypted secret, using raw ansible
+        secret_path = "database/secrets/db_local_password_user"
+        r = secret_utils.decrypt(secret_path)
+
+        t = "vault_previously_encrypted"
+        self.assertEqual(r, t, "Should've decrypted and returned password")
+
+
+    def test_utils_secret_utils_decrypt_bad_key(self):
+        # previously encrypted secret, using raw ansible
+        secret_path = "database/secrets/db_local_password_user"
+        key_path = "database/secrets/db_local_password_user"
+
+        with self.assertRaises(exceptions.Exit) as context:
+            r = secret_utils.decrypt(secret_path, key_path=key_path)

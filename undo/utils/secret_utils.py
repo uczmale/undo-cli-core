@@ -1,7 +1,7 @@
 import os, sys
 from pathlib import Path
 
-from ansible.parsing.vault import VaultSecret, VaultLib
+from ansible.parsing.vault import VaultSecret, VaultLib, AnsibleVaultError
 import typer
 
 # undo specific imports
@@ -79,18 +79,52 @@ def upsert_secret(secret_path=None, secret=None, *,
     return secret
 
 
-def encrypt(secret_path, secret, *, key_path=".vault/vault-pass.txt"):
+def get_vault(key_path=".vault/vault-pass.txt"):
+    # double check the key path exists, otherwise raise an error
     key_path = Path(key_path)
     if not key_path.exists():
-        raise Typer.Exit(1)
+        raise typer.Exit(1)
 
+    # extract the vault key from its path, and  convert it to a VaultSecret
+    vault_key_text = Path(key_path).read_text().strip()
+    vault_key = VaultSecret(vault_key_text.encode("utf-8"))
+
+    # insantiate a vault library with the default vault_id
+    vault = VaultLib([("default", vault_key)])
+
+    return vault
+
+
+def encrypt(secret_path, secret, *, key_path=".vault/vault-pass.txt"):
+    # double check the folder in which we'll store the secret exits, otherwise...
     secret_path = Path(secret_path)
     if not secret_path.parent.exists():
-        raise Typer.Exit(1)
+        raise typer.Exit(1)
 
-    vault_key_text = Path(key_path).read_text().strip()
-    vault_key = VaultSecret(vault_key_text)
-    vault = VaultLib(vault_key)
-    encrypted_secret = vault.encrypt(secret)
+    # get the vault object and use it to encrypt the secret
+    vault = get_vault(key_path)
+    encrypted_secret = vault.encrypt(secret.encode("utf-8"))
 
-    Path(secret_path).write_text(secret_path)
+    # then save the secret to the secret path
+    Path(secret_path).write_text(encrypted_secret.decode("utf-8"))
+
+    return secret_path
+
+
+def decrypt(secret_path, *, key_path=".vault/vault-pass.txt"):
+    # double check secret exits...
+    secret_path = Path(secret_path)
+    if not secret_path.exists():
+        raise typer.Exit(1)
+    
+    # then get said secret
+    secret = secret_path.read_text()
+
+    # get the vault object and use it to decrypt the secret
+    vault = get_vault(key_path)
+    try:
+        decrypted_secret = vault.decrypt(secret.encode("utf-8"))
+    except AnsibleVaultError as ex:
+        raise typer.Exit(1)
+
+    return decrypted_secret.decode("utf-8").strip()

@@ -10,7 +10,7 @@ from undo.commands.database import database_misc
 
 default_database_host = "127.0.0.1"
 default_script_path = "database/db_initialise.sql"
-default_username = "root"
+default_username = "easikit_admin"
 
 def release(script_path, env, host=default_database_host):
     # start setting up the placeholder map

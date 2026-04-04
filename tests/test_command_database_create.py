@@ -34,7 +34,7 @@ class DatabaseCreateTestCase(unittest.TestCase):
         echo_tests = [
                 "\nRunning the MySQL container..",
                 "\tdocker run -d \\\n",
-                f"\t             --name {database_name}db mysql:8.4 mysqld \\\n"
+                f"\t       --name {database_name}db mysql:8.4 mysqld \\\n"
             ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 # undo specific imports
 from undo.utils import const
-from undo.utils import dir_utils
+from undo.utils import echo_utils, dir_utils
 from undo.commands.database import database_misc
 
 
@@ -18,15 +18,15 @@ def create(database_name, password, hide_input=True):
 
     container_name = database_name + "db"
 
-    echo = "\tdocker run -d \\\n" \
-          f"\t             -e MYSQL_ROOT_PASSWORD=$(cat .vault/db_password) \\\n" \
-           "\t             -p 3306:3306 \\\n" \
-           "\t             -v ./database/local-config/my.conf:/etc/my.conf \\\n" \
-          f"\t             --name {container_name} mysql:8.4 mysqld \\\n" \
-           "\t             --mysql-native-password=ON \\\n"
+    echo = echo_utils.echo_command([
+        "docker run -d",
+        "-e MYSQL_ROOT_PASSWORD=$(cat .vault/db_password)",
+        "-p 3306:3306", "-v ./database/local-config/my.conf:/etc/my.conf",
+        f"--name {container_name} mysql:8.4 mysqld",
+        "--mysql-native-password=ON"
+    ])
 
-    typer.secho("\nRunning the MySQL container..")
-    typer.secho(echo, fg=const.CODE_TEXT_COLOUR)
+    echo_utils.echo(title="Running the MySQL container..", text=echo, level="code")
 
     # the actual docker command to run
     # TODO: have a think about the f-strings and shell injection maybe?
@@ -50,7 +50,7 @@ def initialise_database_directory():
 
     my_conf = Path(local_config / "my.conf")
     if not my_conf.exists():
-        typer.secho("\nCreating 'database/local-config/my.conf' file")
+        echo_utils.echo("Creating 'database/local-config/my.conf' file")
         my_conf.write_text("[mysqld]\nmysql_native_password=ON")
 
     return database_path

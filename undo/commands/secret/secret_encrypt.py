@@ -42,21 +42,6 @@ def encrypt_secret(secret, secret_path, *, overwrite=False):
     return secret_path
 
 
-def ensure_path(secret_path):
-    secret_path = Path(secret_path)
-    if not secret_path.resolve().parent.parent.exists():
-        typer.secho("\nHold the phone", fg=const.ERRR_TEXT_COLOUR)
-        typer.secho(f"The folder '{secret_path.parent.parent}' doesn't exist,")
-        typer.secho("please create that at least before continuing")
-        raise typer.Exit(1)
-
-    elif not secret_path.parent.exists():
-        secret_path.parent.mkdir(parents=True, exist_ok=True)
-        Path(secret_path.parent / ".none").touch()
-
-    return secret_path
-
-
 def check_autogenerate(secret, *, secret_length=30):
     # if secret explicitly is true, autogenerate
     if secret is True:

@@ -101,17 +101,6 @@ class SecretEncryptTestCase(unittest.TestCase):
 
 
     @patch("typer.secho")
-    def test_command_secret_encrypt_ensure_path(self, mock_echo):
-        secret_path = "functions/undo_api_publisher/secrets/DB_PASSWORD"
-
-        r = secret_encrypt.ensure_path(secret_path)
-
-        t = Path(r.parent / ".none")
-        self.assertTrue(t.exists(), "Should've created the .none file")
-        Path(secret_path).parent.exists() and shutil.rmtree(Path(secret_path).parent)
-
-
-    @patch("typer.secho")
     def test_command_secret_encrypt_check_autogenerate_secret_provided(self, mock_echo):
         secret = "456_provided_string_uwv"
 

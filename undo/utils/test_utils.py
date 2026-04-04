@@ -21,10 +21,11 @@ def assertNotEcho(unit, echo_tests, mockery):
 
 class PrintBuffer:
     # stdout logic stolen from
+    # used mostly to test itself?
     # https://blog.finxter.com/7-easy-steps-to-redirect-your-standard-output-to-a-variable-python/
 
     def __init__(self):
-        # during the with line and receives te with content
+        # during the with line and receives the with content
         # e.g. with PrintBuffer(...) the ... is passed to __init__
         # could be a file name later down the line, for example
         pass

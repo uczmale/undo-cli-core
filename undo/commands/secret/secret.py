@@ -11,19 +11,19 @@ app = typer.Typer(no_args_is_help=True)
 
 
 @app.command("encrypt", help=config["encrypt"]["help"])
-def create_command(path: config["encrypt"]["path"],
+def encrypt_command(path: config["encrypt"]["path"],
                     secret: config["encrypt"]["secret"] = None,
                     autogenerate: config["encrypt"]["autogenerate"] = False,
                     overwrite: config["encrypt"]["overwrite"] = False) -> None:
 
-    secret = secret if secret else autogenerate
+    secret = secret if secret is not None else autogenerate
 
     secret_encrypt.encrypt_secret(secret=secret, secret_path=path, overwrite=overwrite)
     return
 
 
 @app.command("decrypt", help=config["decrypt"]["help"])
-def create_command(path: config["decrypt"]["path"],
+def decrypt_command(path: config["decrypt"]["path"],
                     raw: config["decrypt"]["raw"] = False) -> None:
 
     secret_misc.decrypt_secret(secret_path=path, raw=raw)
@@ -31,7 +31,7 @@ def create_command(path: config["decrypt"]["path"],
 
 
 @app.command("generate", help=config["generate"]["help"])
-def create_command(characters: config["generate"]["characters"] = 38) -> None:
+def generate_command(characters: config["generate"]["characters"] = 38) -> None:
 
     secret_misc.generate_secret(chars=characters, include_symbols=True)
     return

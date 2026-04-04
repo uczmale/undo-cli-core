@@ -186,6 +186,7 @@ class SecretUtilsTestCase(unittest.TestCase):
             r = secret_utils.get_vault(key_path)
 
 
+
     def test_utils_secret_utils_encrypt(self):
         secret_path = "database/secrets/db_local_password_admin"
         Path(secret_path).unlink(missing_ok=True)

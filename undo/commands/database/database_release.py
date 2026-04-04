@@ -17,7 +17,7 @@ def release(script_path, env, host=default_database_host):
     placeholder_mapping = [("<ENV>", env)]
 
     # get admin password
-    password_path = Path(".vault/db_password")
+    password_path = Path(f"database/release/secrets/{env}/db_local_password_root")
     admin_password = secret_utils.get_secret(password_path, show_error=True)
 
     # get script path, including filler bits
@@ -26,7 +26,7 @@ def release(script_path, env, host=default_database_host):
     # get placeholders, get the passwords and add to placeholder mapping
     placeholder_passwords = extract_placeholders(script_path)
     for password_type in placeholder_passwords:
-        password_mapping(placeholder_mapping, password_type)
+        password_mapping(placeholder_mapping, password_type, env)
 
     # send the placeholder map to update the placeholders in the script
     # and return the path of the tmp script created
@@ -64,9 +64,10 @@ def extract_placeholders(script_path):
     return placeholders
 
 
-def password_mapping(placeholder_mapping, password_type):
+def password_mapping(placeholder_mapping, password_type, env):
     # get the admin password and add it to that map
-    password_path = Path(f".vault/db_init_password_{password_type}")
+    default_path = "database/release/secrets/%s/db_%s_password_%s"
+    password_path = Path(default_path % (env, env, password_type))
     password = secret_utils.get_secret(password_path, show_error=True)
 
     placeholder_mapping.append((f"<{password_type.upper()}_PASSWORD>", password))

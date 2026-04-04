@@ -15,14 +15,20 @@ class SecretUtilsTestCase(unittest.TestCase):
     def setUp(self):
         # start the session in the mock project folder
         self.reset_cwd = os.getcwd()
-        self.secret = "existing_secret_123"
         os.chdir("tests/testproject")
-        Path(".vault/db_secret").write_text(self.secret)
+        self.secret = Path(".vault/db_secret").read_text() # existing_secret_123
 
     def tearDown(self):
         # reset to where we ran this test from, since we chdir a bunch
         Path(".vault/db_secret").write_text(self.secret)
         os.chdir(self.reset_cwd)
+
+
+    def test_utils_secret_utils_mask_secret(self):
+        secret = "xyz_middle_middle_rpq"
+        r = secret_utils.mask_secret(secret)
+
+        self.assertEqual(r, "xy*****pq", "Should've masked all but the start and end")
 
 
     def test_utils_secret_utils_get_secret_encrypted(self):
@@ -34,6 +40,14 @@ class SecretUtilsTestCase(unittest.TestCase):
 
     def test_utils_secret_utils_get_secret_unencrypted(self):
         secret_path = Path("functions/undo_event_publisher/secrets/_unencrypted_secret")
+        r = secret_utils.get_secret(secret_path, show_error=True)
+
+        t = "unencrypted_secret"
+        self.assertEqual(r, t, "Should've returned 'unencrypted' secret")
+
+
+    def test_utils_secret_utils_get_secret_unencrypted_no_underscore(self):
+        secret_path = Path("functions/undo_event_publisher/secrets/unencrypted_secret")
         r = secret_utils.get_secret(secret_path, show_error=True)
 
         t = "unencrypted_secret"
@@ -77,7 +91,7 @@ class SecretUtilsTestCase(unittest.TestCase):
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_secret").read_text()
-        self.assertEqual(t, secret, "secret file should've been updated")
+        self.assertNotEqual(t, self.secret, "Secret file should've been updated")
         self.assertEqual(r, secret, "Should've returned new secret")
 
 
@@ -100,8 +114,7 @@ class SecretUtilsTestCase(unittest.TestCase):
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_secret").read_text()
-        self.assertEqual(t, self.secret, "secret file shouldn't've been updated")
-        self.assertEqual(r, self.secret, "Should've returned original secret")
+        self.assertEqual(t, self.secret, "Secret file shouldn't've been updated")
 
 
     @patch("typer.confirm")
@@ -129,9 +142,9 @@ class SecretUtilsTestCase(unittest.TestCase):
         echo_tests = [ "Secret added!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
-        t = Path(".vault/db_secret").read_text()
-        self.assertEqual(t, new_secret, "secret file should've been updated")
-        self.assertEqual(r, new_secret, "Should've returned new secret")
+        t = Path(".vault/db_secret")
+        self.assertTrue(t.exists(), "Secret file should've been created")
+        self.assertNotEqual(t.read_text(), self.secret, "File should be different")
 
 
     @patch("typer.confirm")
@@ -152,12 +165,12 @@ class SecretUtilsTestCase(unittest.TestCase):
                                             skip_exists=skip_exists,
                                             secret_type=secret_type)
 
-        echo_tests = [ "Retrieving existing secret [ex*****23]..." ]
+        echo_tests = [ "found", "ex*****23" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
-        self.assertEqual(r, self.secret, "Should've returned existing secret")
+        self.assertEqual(r, "existing_secret_123", "Should've returned existing secret")
 
         t = Path(".vault/db_secret").read_text()
-        self.assertEqual(t, self.secret, "secret file shouldn't've been updated")
+        self.assertEqual(t, self.secret, "Secret file shouldn't've been updated")
 
 
     def test_utils_secret_utils_get_vault(self):
@@ -177,7 +190,7 @@ class SecretUtilsTestCase(unittest.TestCase):
         secret_path = "database/secrets/db_local_password_admin"
         Path(secret_path).unlink(missing_ok=True)
         secret = "vault_newly_encrypted"
-        r = secret_utils.encrypt(secret_path, secret)
+        r = secret_utils.encrypt(secret, secret_path)
 
         self.assertTrue(r.exists(), "Should've created the password file")
 

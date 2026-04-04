@@ -11,16 +11,16 @@ default_database_host = "127.0.0.1"
 default_script_path = ".database/db_initialise.sql"
 default_username = "root"
 
-def mysql_statement(statement, database_name=None):
+def mysql_statement(statement, env, database_name=None):
     # get admin password
-    password_path = Path(".vault/db_password")
+    password_path = Path(f"database/release/secrets/{env}/db_{env}_password_root")
     admin_password = secret_utils.get_secret(password_path)
 
     # echo command
     database_command = f"-D {database_name} " if database_name else ""
     database_command_echo = f"\t      {database_command}\\\n" if database_name else ""
     echo = f"\tmysql --host {default_database_host} --port 3306 \\\n" \
-           f"\t      -u {default_username} -p$(cat .vault/db_password) \\\n" \
+           f"\t      -u {default_username} -p$(undo decrypt -f {password_path}) \\\n" \
            f"{database_command_echo}" \
            f"\t      -e \"{statement}\"\n"
     typer.secho(f"Running database statement..")
@@ -52,11 +52,11 @@ def upsert_password(password=None, *, env="local", user_type="root",
     
     # set up the database specific password path and create it if it doesn't exist
     # this is probably happening during database create command after all
-    password_path = Path(f"database/release/{env}/")
+    password_path = Path(f"database/release/secrets/{env}/")
     password_path.mkdir(parents=True, exist_ok=True)
 
     # put it all together and what have you got
-    password_file = Path(password_path / f"db_password_{user_type}")
+    password_file = Path(password_path / f"db_{env}_password_{user_type}")
 
     # ding dong, password
     password = secret_utils.upsert_secret(password_file, password,

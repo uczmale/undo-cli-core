@@ -10,7 +10,7 @@ from undo.commands.database import database_misc
 
 def create(database_name, password, hide_input=True):
     # get the password or ask for one from the user
-    password = database_misc.upsert_password(password, dev="local", user_type="root",
+    password = database_misc.upsert_password(password, env="local", user_type="root",
                                                 hide_input=hide_input, skip_exists=True)
 
     # get the database folder for the project (create if not)

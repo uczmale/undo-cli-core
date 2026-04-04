@@ -1,4 +1,4 @@
-import unittest, os, sys
+import unittest, os, sys, shutil
 from pathlib import Path
 from unittest.mock import patch
 from typer.testing import CliRunner
@@ -8,20 +8,167 @@ from click import exceptions
 from undo.utils import test_utils
 
 # the module being tested
-from undo.commands.secret import secret_misc
+from undo.commands.secret import secret_encrypt
 
 runner = CliRunner()
 
-class SecretMiscTestCase(unittest.TestCase):
+class SecretEncryptTestCase(unittest.TestCase):
     def setUp(self):
-        pass
+        # start the session in the mock project folder
+        self.reset_cwd = os.getcwd()
+        os.chdir("tests/testproject")
+        # vault_previously_encrypted
+        self.secret = Path("database/secrets/db_local_password_user").read_text()
+
+    def tearDown(self):
+        # reset to where we ran this test from, since we chdir a bunch
+        Path("database/secrets/db_local_password_user").write_text(self.secret)
+        os.chdir(self.reset_cwd)
+
 
     @patch("typer.secho")
-    def test_command_secret_misc_generate_secret(self, mock_echo):
-        chars = 20
-        r = secret_misc.generate_secret(chars)
+    def test_command_secret_encrypt_encrypt_secret(self, mock_echo):
+        secret = "just_encrypted_password"
+        secret_path = "functions/undo_api_publisher/secrets/DB_PASSWORD"
+        r = secret_encrypt.encrypt_secret(secret, secret_path)
 
-        echo_tests = [ "\nPassword generated!" ]
+        self.assertTrue(Path(r).exists(), "Should've created the secret file")
+        Path(secret_path).exists() and shutil.rmtree(Path(secret_path).parent)
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_encrypt_secret_autogenerate(self, mock_echo):
+        secret = True
+        secret_path = "functions/undo_api_publisher/secrets/DB_PASSWORD"
+        r = secret_encrypt.encrypt_secret(secret, secret_path)
+
+        self.assertTrue(Path(r).exists(), "Should've created the secret file")
+        Path(secret_path).exists() and shutil.rmtree(Path(secret_path).parent)
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_encrypt_secret_no_overwrite(self, mock_echo):
+        secret = "just_encrypted_password"
+        secret_path = "database/secrets/db_local_password_user"
+
+        with self.assertRaises(exceptions.Exit) as context:
+            r = secret_encrypt.encrypt_secret(secret, secret_path)
+
+        echo_tests = [ f"secret already exists at '{secret_path}'" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
-        self.assertEqual(len(r), chars, "Should've generated pasword of right length")
+
+    @patch("undo.utils.secret_utils.encrypt")
+    @patch("typer.confirm")
+    @patch("typer.secho")
+    def test_command_secret_encrypt_encrypt_secret_overwrite(self,
+                                                mock_echo, mock_cnf, mock_enc):
+        mock_cnf.return_value = True
+        secret = "just_encrypted_password"
+        secret_path = "database/secrets/db_local_password_user"
+        overwrite = True
+
+        r = secret_encrypt.encrypt_secret(secret, secret_path, overwrite=overwrite)
+
+        echo_tests = [ f"do you want to overwrite" ]
+        test_utils.assertEcho(self, echo_tests, mock_cnf)
+
+        args = mock_enc.call_args.args
+        self.assertEqual(args[0], secret, "Should've encrypted new secret")
+
+
+    @patch("undo.utils.secret_utils.encrypt")
+    @patch("typer.prompt")
+    @patch("typer.secho")
+    def test_command_secret_encrypt_encrypt_secret_prompt(self,
+                                                mock_echo, mock_pmt, mock_enc):
+        mock_pmt.return_value = new_secret = "newly_prompted_password"
+        secret = False
+        secret_path = "database/secrets/db_local_password_prompted"
+        overwrite = True
+
+        r = secret_encrypt.encrypt_secret(secret, secret_path, overwrite=overwrite)
+
+        echo_tests = [ f"Enter the secret" ]
+        test_utils.assertEcho(self, echo_tests, mock_pmt)
+
+        echo_tests = [ f"The secret 'ne*****rd' has been encrypted" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        args = mock_enc.call_args.args
+        self.assertTrue(mock_enc.called, "Should've called encrypt after prompting")
+        self.assertEqual(args[0], new_secret, "Should've encrypted new secret")
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_ensure_path(self, mock_echo):
+        secret_path = "functions/undo_api_publisher/secrets/DB_PASSWORD"
+
+        r = secret_encrypt.ensure_path(secret_path)
+
+        t = Path(r.parent / ".none")
+        self.assertTrue(t.exists(), "Should've created the .none file")
+        Path(secret_path).parent.exists() and shutil.rmtree(Path(secret_path).parent)
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_check_autogenerate_secret_provided(self, mock_echo):
+        secret = "456_provided_string_uwv"
+
+        r = secret_encrypt.check_autogenerate(secret)
+
+        self.assertEqual(r, secret, "Should've returned original secret")
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_check_autogenerate_auto(self, mock_echo):
+        secret = True
+        secret_length = 45
+
+        r = secret_encrypt.check_autogenerate(secret, secret_length=secret_length)
+
+        echo_tests = [ "secret has been autogenerated", "*****" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        self.assertIsInstance(r, str, "Should've returned string")
+        self.assertEqual(len(r), secret_length, "Should've create right length secret")
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_check_autogenerate_auto(self, mock_echo):
+        secret = False
+        r = secret_encrypt.check_autogenerate(secret)
+
+        self.assertEqual(r, None, "Should've returned None, ready for prompting.")
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_check_secret_exists(self, mock_echo):
+        secret_path = "database/secrets/db_local_password_user"
+        overwrite = True
+
+        r = secret_encrypt.check_secret_exists(secret_path, overwrite)
+
+        self.assertTrue(r, "Should've returned true that secret exists")
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_check_secret_exists_exists(self, mock_echo):
+        secret_path = "database/secrets/db_local_password_user"
+        overwrite = False
+
+        with self.assertRaises(exceptions.Exit) as context:
+            r = secret_encrypt.check_secret_exists(secret_path, overwrite)
+
+        echo_tests = [ f"A secret already exists at '{secret_path}'" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+
+    @patch("typer.secho")
+    def test_command_secret_encrypt_check_secret_not_exists(self, mock_echo):
+        secret_path = "database/secrets/db_xst_password_dxst"
+        overwrite = True
+
+        r = secret_encrypt.check_secret_exists(secret_path, overwrite)
+
+        self.assertFalse(r, "Should've returned False, that secret does exists")

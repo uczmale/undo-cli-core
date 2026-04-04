@@ -26,9 +26,9 @@ class DatabaseTestCase(unittest.TestCase):
     @patch("subprocess.run")
     @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
     def test_command_database_command_create(self, mock_run):
-        password_path = Path(".vault/db_password")
-        password = password_path.read_text()
-        password_path.unlink(missing_ok=True)
+        password_path = Path("database/release/secrets/local/db_local_password_root")
+        password_tmp = Path("database/release/secrets/local/db_local_password_tmp")
+        password_path.rename(password_tmp)
 
         r = runner.invoke(database.app,
                             ["create", "undo"],
@@ -54,7 +54,7 @@ class DatabaseTestCase(unittest.TestCase):
         self.assertIn(t, a, "Should've given the container the correct name")
         
         # clean up
-        password_path.write_text(password)
+        password_tmp.rename(password_path)
 
 
     @patch("subprocess.run")
@@ -68,7 +68,7 @@ class DatabaseTestCase(unittest.TestCase):
         self.assertEqual(r.exit_code, 0, "Should have returned 0 exit code")
 
         echo_tests = [
-            "Retrieving", "Running the MySQL container..",
+            "found", "local_password_root", "Running the MySQL container..",
             "docker run -d", "--name undodb"
         ]
         for t in echo_tests:

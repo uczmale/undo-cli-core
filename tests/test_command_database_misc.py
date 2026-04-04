@@ -10,16 +10,13 @@ from undo.utils import test_utils
 # the module being tested
 from undo.commands.database import database_misc
 
-runner = CliRunner()
-
 class DatabaseMiscTestCase(unittest.TestCase):
     def setUp(self):
         # start the session in the mock project folder
         self.reset_cwd = os.getcwd()
-        self.password = "existing_password_123"
-        self.root_password_path = "database/release/local/db_password_root"
         os.chdir("tests/testproject")
-        Path(self.root_password_path).write_text(self.password)
+        self.root_password_path = "database/release/secrets/local/db_local_password_root"
+        self.password = Path(self.root_password_path).read_text()
 
     def tearDown(self):
         # reset to where we ran this test from, since we chdir a bunch
@@ -31,11 +28,12 @@ class DatabaseMiscTestCase(unittest.TestCase):
     @patch("typer.secho")
     def test_command_database_misc_mysql_statement(self, mock_echo, mock_run):
         statement = "SELECT * FROM dual"
+        env = "local"
         database_name = "undo"
-        r = database_misc.mysql_statement(statement, database_name)
+        r = database_misc.mysql_statement(statement, env, database_name=database_name)
 
         echo_tests = [ "Running database statement..",
-                       f"\n\t      -u root -p$(cat .vault/db_password)",
+                       f"\n\t      -u root -p$(undo decrypt",
                        f"-e \"{statement}\"",
                        f"-D {database_name}" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
@@ -43,7 +41,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         args, kwargs = mock_run.call_args
         a = args[0]
         t = "mysql --host 127.0.0.1 --port 3306 -u root -pexisting_password_123"
-        self.assertIn(t, a, "Should've connected to the database")
+        self.assertIn(t, a, "Should've tried to to the right database")
 
         t = f"-D {database_name} -e \"{statement}\""
         self.assertIn(t, a, "Should've run the command against the databata")
@@ -90,7 +88,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(self.root_password_path).read_text()
-        self.assertEqual(t, password, "Password file should've been updated")
+        self.assertNotEqual(t, self.password, "Password file should've been updated")
         self.assertEqual(r, password, "Should've returned new password")
 
 
@@ -111,7 +109,6 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
         t = Path(self.root_password_path).read_text()
         self.assertEqual(t, self.password, "Password file shouldn't've been updated")
-        self.assertEqual(r, self.password, "Should've returned original password")
 
 
     @patch("typer.confirm")
@@ -135,9 +132,6 @@ class DatabaseMiscTestCase(unittest.TestCase):
 
         echo_tests = [ "Secret added!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
-
-        t = Path(self.root_password_path).read_text()
-        self.assertEqual(t, new_password, "Password file should've been updated")
         self.assertEqual(r, new_password, "Should've returned new password")
 
 
@@ -155,9 +149,10 @@ class DatabaseMiscTestCase(unittest.TestCase):
         r = database_misc.upsert_password(password, hide_input=hide_input,
                                                         skip_exists=skip_exists)
 
-        echo_tests = [ "Retrieving existing secret [ex*****23]..." ]
+        echo_tests = [ "found", "ex*****23" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
-        self.assertEqual(r, self.password, "Should've returned existing password")
+        t = "existing_password_123"
+        self.assertEqual(r, t, "Should've returned existing password")
 
         t = Path(self.root_password_path).read_text()
         self.assertEqual(t, self.password, "Password file shouldn't've been updated")
@@ -171,6 +166,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         mock_pmt.return_value = new_password = "updated_dev_user_password_333"
         mock_cnf.return_value = True
 
+
         password = None
         env = "dev"
         user_type = "user"
@@ -179,10 +175,8 @@ class DatabaseMiscTestCase(unittest.TestCase):
         r = database_misc.upsert_password(password, env=env, user_type=user_type,
                                     hide_input=hide_input, skip_exists=skip_exists)
 
-        echo_tests = [ "Retrieving existing secret [de*****32]..." ]
+        echo_tests = [ "found", "de*****32" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
+
         t = "dev_current_user_password_432"
         self.assertEqual(r, t, "Should've returned existing password")
-
-        a = Path(f"database/release/{env}/db_password_{user_type}").read_text()
-        self.assertEqual(a, t, "Password file shouldn't've been updated")

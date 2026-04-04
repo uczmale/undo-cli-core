@@ -1,5 +1,5 @@
 import typer
-from typing_extensions import Annotated
+from typing import Annotated
 
 
 config = {
@@ -67,6 +67,10 @@ config = {
         "statement": Annotated[str, typer.Argument(
             show_default=False,
             help="The SQL statement to be run"
+        )],
+        "environment": Annotated[str, typer.Option(
+            "--environment", "-e",
+            help="Genreally the environment but potentially the database's target"
         )],
         "database_name": Annotated[str, typer.Option(
             "--database", "-d",

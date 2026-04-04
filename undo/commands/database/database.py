@@ -42,9 +42,10 @@ def release_command(environment: config["release"]["environment"] = ...,
 @app.command("select", hidden=True)
 @app.command("statement", help=config["statement"]["help"])
 def statement_command(statement: config["statement"]["statement"] = "SHOW DATABASES",
+                    env: config["statement"]["environment"] = "local",
                     database_name: config["statement"]["database_name"] = None) -> None:
 
-    database_misc.mysql_statement(statement, database_name)
+    database_misc.mysql_statement(statement, env, database_name)
     return
 
 

@@ -27,7 +27,7 @@ class DatabaseReleaseTestCase(unittest.TestCase):
     @patch("typer.secho")
     def test_command_database_release_release(self, mock_echo, mock_run):
         script_path = "database/db_initialise.sql"
-        env = "dev"
+        env = "local"
         host = "127.0.0.1"
 
         r = database_release.release(script_path, env, host)
@@ -80,34 +80,36 @@ class DatabaseReleaseTestCase(unittest.TestCase):
 
 
     def test_command_database_release_password_mapping(self):
-        placeholder_mapping = [("<ENV>", "dev")]
+        placeholder_mapping = [("<ENV>", "local")]
         password_type = "admin"
-        r = database_release.password_mapping(placeholder_mapping, password_type)
+        env = "local"
+        r = database_release.password_mapping(placeholder_mapping, password_type, env)
 
         t = "init_admin_password_111"
         self.assertEqual(r, t, "Should've returned name/password tuple")
 
         a = placeholder_mapping
-        t = [("<ENV>", "dev"), ("<ADMIN_PASSWORD>", "init_admin_password_111")]
+        t = [("<ENV>", "local"), ("<ADMIN_PASSWORD>", "init_admin_password_111")]
         self.assertEqual(a, t, "Should've added new mapping to existing placeholders")
 
 
     @patch("typer.secho")
     def test_command_database_release_password_mapping_not_exist(self, mock_echo):
-        placeholder_mapping = [("<ENV>", "dev")]
+        placeholder_mapping = [("<ENV>", "local")]
         password_type = "xyz"
+        env = "local"
 
         with self.assertRaises(exceptions.Exit) as context:
-            r = database_release.password_mapping(placeholder_mapping, password_type)
+            r = database_release.password_mapping(placeholder_mapping, password_type, env)
 
-        echo_tests = [ ".vault/db_init_password_xyz" ]
+        echo_tests = [ "database/release/secrets/local/db_local_password_xyz" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
 
     @patch("typer.secho")
     def test_command_database_release_update_script(self, mock_echo):
         script_path = Path("database/db_initialise.sql")
-        placeholder_mapping = [("<ENV>", "dev"), ("<ADMIN_PASSWORD>", "password")]
+        placeholder_mapping = [("<ENV>", "local"), ("<ADMIN_PASSWORD>", "password")]
         r = database_release.update_script(script_path, placeholder_mapping)
 
         self.assertTrue(r.exists(), "Should've created the converted script")
@@ -115,7 +117,7 @@ class DatabaseReleaseTestCase(unittest.TestCase):
         self.assertNotIn("<ADMIN", r.read_text(), "Should've replaced all <ADMIN markers")
 
         echo_tests = [ "Copy database script",
-                       "sed -i \"s/<ENV>/dev/g\" database/tmp/db_initialise.sql",
+                       "sed -i \"s/<ENV>/local/g\" database/tmp/db_initialise.sql",
                        "s/<ADMIN_PASSWORD>/pa*****rd/g" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
@@ -126,7 +128,7 @@ class DatabaseReleaseTestCase(unittest.TestCase):
     @patch("typer.secho")
     def test_command_database_release_update_script_not_exist(self, mock_echo):
         script_path = Path("database/xyz.sql")
-        placeholder_mapping = [("<ENV>", "dev"), ("<ADMIN_PASSWORD>", "password")]
+        placeholder_mapping = [("<ENV>", "local"), ("<ADMIN_PASSWORD>", "password")]
 
         with self.assertRaises(exceptions.Exit) as context:
             r = database_release.update_script(script_path, placeholder_mapping)

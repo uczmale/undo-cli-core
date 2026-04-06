@@ -24,8 +24,11 @@ class DatabaseReleaseTestCase(unittest.TestCase):
 
 
     @patch("subprocess.run")
+    @patch("undo.utils.secret_utils.encrypt")
+    @patch("typer.prompt")
     @patch("typer.secho")
-    def test_command_database_release_release(self, mock_echo, mock_run):
+    def test_command_database_release_release(self,
+                                                mock_echo, mock_pmt, mock_enc, mock_run):
         script_path = "database/db_initialise.sql"
         env = "local"
         host = "127.0.0.1"
@@ -79,7 +82,8 @@ class DatabaseReleaseTestCase(unittest.TestCase):
         self.assertEqual(r, t, "Should've returned map of user and admin")
 
 
-    def test_command_database_release_password_mapping(self):
+    @patch("typer.secho")
+    def test_command_database_release_password_mapping(self, mock_echo):
         placeholder_mapping = [("<ENV>", "local")]
         password_type = "admin"
         env = "local"
@@ -93,17 +97,23 @@ class DatabaseReleaseTestCase(unittest.TestCase):
         self.assertEqual(a, t, "Should've added new mapping to existing placeholders")
 
 
+    @patch("undo.utils.secret_utils.encrypt")
+    @patch("typer.prompt")
     @patch("typer.secho")
-    def test_command_database_release_password_mapping_not_exist(self, mock_echo):
+    def test_command_database_release_password_mapping_not_exist(self,
+                                                        mock_echo, mock_pmt, mock_enc):
+        mock_pmt.return_value = new_secret = "prompted_secret_xyz"
         placeholder_mapping = [("<ENV>", "local")]
         password_type = "xyz"
         env = "local"
 
-        with self.assertRaises(exceptions.Exit) as context:
-            r = database_release.password_mapping(placeholder_mapping, password_type, env)
+        r = database_release.password_mapping(placeholder_mapping, password_type, env)
 
-        echo_tests = [ "database/release/secrets/local/db_local_password_xyz" ]
-        test_utils.assertEcho(self, echo_tests, mock_echo)
+        echo_tests = [ "Enter the database xyz secret" ]
+        test_utils.assertEcho(self, echo_tests, mock_pmt)
+
+        a = Path("database/release/secrets/local/db_local_password_xyz")
+        mock_enc.assert_called_with(new_secret, a)
 
 
     @patch("typer.secho")

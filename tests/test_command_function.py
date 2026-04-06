@@ -27,7 +27,7 @@ class FunctionTestCase(unittest.TestCase):
                                 "--routes", "/undo",
                                 "--port", "8080"],
                             catch_exceptions=False)
-        print(r.output)
+        # print(r.output)
 
         self.assertEqual(r.exit_code, 0, "Should have returned 0 exit code")
 

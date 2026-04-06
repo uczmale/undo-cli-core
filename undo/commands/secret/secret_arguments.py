@@ -18,10 +18,6 @@ config = {
             "--secret", "-s",
             help="The actual password or secret content to be encrypted"
         )],
-        "autogenerate": Annotated[bool, typer.Option(
-            "--autogenerate", "-g",
-            help="Auto-generated the secret if not provided, otherwise prompt for it"
-        )],
         "overwrite": Annotated[bool, typer.Option(
             "--overwrite", "-o",
             help="If the password already exists, overwrite it "
@@ -42,8 +38,8 @@ config = {
     },
 
     "generate": {
-        "characters": Annotated[int, typer.Option(
-            "--characters", "-c",
+        "length": Annotated[int, typer.Option(
+            "--length", "-l",
             help="The number of characters you want to generate"
         )],
         "help": "Generate a random string"

@@ -9,9 +9,6 @@ from undo.utils import const, secret_utils
 
 
 def encrypt_secret(secret, secret_path, *, overwrite=False):
-    # check if the secret is set to something that expects autogeneration or prompting
-    secret = check_autogenerate(secret)
-
     # while upsert will do the check exists logic
     # we can't give good enough errors if we use it, so...
     if overwrite is False: check_secret_exists(secret_path, overwrite)

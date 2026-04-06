@@ -68,7 +68,8 @@ def password_mapping(placeholder_mapping, password_type, env):
     # get the admin password and add it to that map
     default_path = "database/release/secrets/%s/db_%s_password_%s"
     password_path = Path(default_path % (env, env, password_type))
-    password = secret_utils.get_secret(password_path, show_error=True)
+    password = secret_utils.upsert_secret(password_path, skip_exists=True,
+                                            secret_type=f"database {password_type}")
 
     placeholder_mapping.append((f"<{password_type.upper()}_PASSWORD>", password))
 

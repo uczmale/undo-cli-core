@@ -133,7 +133,8 @@ class SecretUtilsTestCase(unittest.TestCase):
         r = secret_utils.upsert_secret(secret_path, secret, hide_input=hide_input,
                                             secret_type=secret_type)
 
-        echo_tests = [ "Enter the main database admin secret" ]
+        echo_tests = [ "Enter the main database admin secret",
+                       "(use AUTO to autogenerate)" ]
         test_utils.assertEcho(self, echo_tests, mock_pmt)
 
         echo_tests = [ "You already have a secret", "Secret updated!" ]
@@ -214,3 +215,23 @@ class SecretUtilsTestCase(unittest.TestCase):
 
         with self.assertRaises(exceptions.Exit) as context:
             r = secret_utils.decrypt(secret_path, key_path=key_path)
+
+
+    def test_utils_secret_utils_generate_secret(self):
+        chars = 20
+        r = secret_utils.generate_secret(chars)
+
+        self.assertEqual(len(r), chars, "Should've generated pasword of right length")
+
+
+    def test_utils_secret_utils_generate_secret_default_length(self):
+        r = secret_utils.generate_secret()
+
+        self.assertEqual(len(r), 30, "Should've generated pasword of default length")
+
+
+    @patch.dict(os.environ, { "SECRET_LENGTH": "10" })
+    def test_utils_secret_utils_generate_secret_env_length(self):
+        r = secret_utils.generate_secret()
+
+        self.assertEqual(len(r), 10, "Should've generated pasword of env length")

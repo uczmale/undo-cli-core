@@ -36,9 +36,12 @@ class SecretEncryptTestCase(unittest.TestCase):
         Path(secret_path).exists() and shutil.rmtree(Path(secret_path).parent)
 
 
+    @patch("typer.prompt")
     @patch("typer.secho")
-    def test_command_secret_encrypt_encrypt_secret_autogenerate(self, mock_echo):
-        secret = True
+    def test_command_secret_encrypt_encrypt_secret_autogenerate(self,
+                                                            mock_echo, mock_pmt):
+        mock_pmt.return_value = "AUTO"
+        secret = None
         secret_path = "functions/undo_api_publisher/secrets/DB_PASSWORD"
         r = secret_encrypt.encrypt_secret(secret, secret_path)
 

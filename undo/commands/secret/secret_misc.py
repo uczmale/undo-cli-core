@@ -1,5 +1,4 @@
 import os, subprocess
-import string, random
 import typer
 
 # undo specific imports
@@ -22,17 +21,8 @@ def decrypt_secret(secret_path, *, raw=False):
     return secret
 
 
-def generate_secret(chars, lowercase_only=True, include_symbols=False):
-    lower = list(string.ascii_lowercase)
-    upper = list(string.ascii_uppercase) if not lowercase_only else []
-    numbers = list("0123456789") if not lowercase_only  else []
-    symbols = list("_-,.~") if include_symbols else []
-    char_set = lower + upper + numbers + numbers + symbols + symbols
-    
-    first_char = random.choice(lower) # guarantee letter first
-    random_list = ''.join([random.choice(char_set) for i in range(chars - 1)])
-
-    secret = first_char + random_list
+def generate_secret(secret_length, lowercase_only=True, include_symbols=False):
+    secret = secret_utils.generate_secret(secret_length, lowercase_only, include_symbols)
     typer.secho("\nSecret generated!", fg=const.SCSS_TEXT_COLOUR)
     typer.secho("\t" + secret)
 

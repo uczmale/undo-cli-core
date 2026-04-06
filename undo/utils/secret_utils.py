@@ -1,4 +1,5 @@
 import os, sys
+import string, random
 from pathlib import Path
 
 from ansible.parsing.vault import VaultSecret, VaultLib, AnsibleVaultError
@@ -64,7 +65,7 @@ def upsert_secret(secret_path=None, secret=None, *,
     # otherwise, if a secret wasn't already prompted, start by prompting
     if not secret:
         secret_type = " "+ secret_type if secret_type else ""
-        secret = typer.prompt(f"Enter the{secret_type} secret",
+        secret = typer.prompt(f"Enter the{secret_type} secret (use AUTO to generate)",
                                     hide_input=hide_input)
 
     # then, if a secret does exist, double check if they wanna change it
@@ -79,7 +80,10 @@ def upsert_secret(secret_path=None, secret=None, *,
         secret_check = typer.confirm(echo)
 
         # if they wanna change it, encrypt the new secret into the file
+        # if they had AUTO as the password, they want you to generate it...
         if secret_check:
+            if secret == "AUTO":
+                secret = generate_secret()
             encrypt(secret, secret_file)
             typer.secho("\nSecret updated!", fg=const.SCSS_TEXT_COLOUR)
         
@@ -146,3 +150,23 @@ def decrypt(secret_path, *, key_path=".vault/vault-pass.txt"):
         raise typer.Exit(1)
 
     return decrypted_secret.decode("utf-8").strip()
+
+
+def generate_secret(secret_length=None, lowercase_only=False, include_symbols=True):
+    # default number of characters
+    length = secret_length if secret_length else int(os.environ.get("SECRET_LENGTH", 30))
+    
+    # get all the symbols we wanna randomise over, upper, lower, numbers, symbols
+    lower = list(string.ascii_lowercase)
+    upper = list(string.ascii_uppercase) if not lowercase_only else []
+    numbers = list("0123456789") if not lowercase_only  else []
+    symbols = list("_-,.~") if include_symbols else []
+    char_set = lower + upper + numbers + numbers + symbols + symbols
+
+    # starting with a letter, generate some number of characters
+    first_char = random.choice(lower) # guarantee letter first
+    random_list = ''.join([random.choice(char_set) for i in range(length - 1)])
+
+    secret = first_char + random_list
+
+    return secret

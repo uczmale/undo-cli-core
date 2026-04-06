@@ -83,7 +83,7 @@ class SecretTestCase(unittest.TestCase):
     @patch("subprocess.run")
     def test_command_secret_command_generate(self, mock_run):
         r = runner.invoke(secret.app,
-                            ["generate", "-c", "100"],
+                            ["generate", "-l", "100"],
                             catch_exceptions=False)
         # print(r.output)
 

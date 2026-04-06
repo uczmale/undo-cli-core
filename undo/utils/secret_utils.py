@@ -65,7 +65,7 @@ def upsert_secret(secret_path=None, secret=None, *,
     # otherwise, if a secret wasn't already prompted, start by prompting
     if not secret:
         secret_type = " "+ secret_type if secret_type else ""
-        secret = typer.prompt(f"Enter the{secret_type} secret (use AUTO to generate)",
+        secret = typer.prompt(f"Enter the{secret_type} secret (use AUTO to autogenerate)",
                                     hide_input=hide_input)
 
     # then, if a secret does exist, double check if they wanna change it

@@ -33,7 +33,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         r = database_misc.mysql_statement(statement, env, database_name=database_name)
 
         echo_tests = [ "Running database statement..",
-                       f"\n\t      -u root -p$(undo decrypt",
+                       f"\n\t      -u root -p$(undo secret decrypt",
                        f"-e \"{statement}\"",
                        f"-D {database_name}" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
@@ -84,7 +84,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         echo_tests = [ f"You already have a secret (ex*****23)" ]
         test_utils.assertEcho(self, echo_tests, mock_cnf)
 
-        echo_tests = [ "\nSecret updated!" ]
+        echo_tests = [ "\nSecret updated to ne*****89!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(self.root_password_path).read_text()
@@ -130,7 +130,7 @@ class DatabaseMiscTestCase(unittest.TestCase):
         echo_tests = [ "You already have a secret", "Secret updated!" ]
         test_utils.assertNotEcho(self, echo_tests, mock_echo)
 
-        echo_tests = [ "Secret added!" ]
+        echo_tests = [ "Secret en*****55 added!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
         self.assertEqual(r, new_password, "Should've returned new password")
 

@@ -2,7 +2,9 @@ import os, subprocess, shutil
 import typer
 from pathlib import Path
 
+# project specific imports
 from undo.commands.function.helpers import function_wrapper_route_parser
+from undo.utils import secret_utils
 
 CODE_TEXT_COLOUR = typer.colors.BRIGHT_BLACK
 
@@ -15,14 +17,15 @@ def wrapper(context, routes=None, port=8000, no_routes=False):
     # copy the wrapper.py file to the function directory
     copy_wrapper(context)
 
-    # get the env vars from environment.txt
+    # get the env vars from environment.txt and /secrets
     env_vars = extract_env_vars(context)
+    env_secrets = extract_env_secrets(context)
 
     # get the routes automatically from handler.py, unless explicitly overriden
     routes = extract_routes(context, routes, no_routes)
 
     # actually start the wrapper server
-    run_process(context, routes, port, env_vars)
+    run_process(context, routes, port, { **env_vars, **env_secrets })
 
     # when everything is done, remove the wrapper
     delete_wrapper(context)
@@ -55,7 +58,7 @@ def copy_wrapper(context):
 
 def extract_env_vars(context, env_file="environment.txt"):
     # set the env vars
-    typer.secho(f"\nSet the environment variables:")
+    typer.secho(f"\nSetting the environment variables:")
     env_vars = os.environ.copy()
     env_pairs = {}
     with open(context / env_file) as f:
@@ -74,6 +77,36 @@ def extract_env_vars(context, env_file="environment.txt"):
     typer.secho(env_message, fg=CODE_TEXT_COLOUR)
 
     env_vars = { **env_vars, **env_pairs }
+    return env_vars
+
+
+def extract_env_secrets(context):
+    # set the env vars
+    typer.secho(f"\nSetting the secret environment variables:")
+    env_vars = {}
+
+    # i guess if there are no secrets..?
+    if not Path(context / "secrets").exists():
+        return env_vars
+
+    # otherwise, go through all the files in the secrets folder
+    # and add them to the list (skipping .none and removing lead underscores)
+    for secret_path in Path(context / "secrets").iterdir():
+        if secret_path.name == ".none": continue
+        secret = secret_utils.get_secret(secret_path)
+
+        if secret_path.name.startswith("_"):
+            secret_name = secret_path.name[1:]
+        else:
+            secret_name = secret_path.name
+
+        env_vars[secret_name] = secret
+
+    # print final set of env vars (excluding any that were overwritten)
+    env_message = "\n".join([f"\texport {k}={secret_utils.mask_secret(v)}"
+                                    for k, v in env_vars.items()])
+    typer.secho(env_message, fg=CODE_TEXT_COLOUR)
+
     return env_vars
 
 
@@ -131,6 +164,8 @@ def run_process(context, routes=None, port=8000, env_vars={}):
     if routes:
         command_args = command_args + routes
 
+    # TODO: make it silent, add the ampersand or pipe it to log or such...
+    # something like... > wrapper.log 2>&1 &
     typer.secho(f"\nRun the wrapper script:")
     typer.secho(f"\tpython3 {' '.join(command_args)}", fg=CODE_TEXT_COLOUR)
     try:

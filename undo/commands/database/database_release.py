@@ -4,21 +4,21 @@ from pathlib import Path
 
 # undo specific imports
 from undo.utils import const
-from undo.utils import dir_utils, secret_utils
+from undo.utils import dir_utils, secret_utils, echo_utils
 from undo.commands.database import database_misc
 
 
 default_database_host = "127.0.0.1"
 default_script_path = "database/db_initialise.sql"
-default_username = "easikit_admin"
+default_username = "root"
 
 def release(script_path, env, host=default_database_host):
     # start setting up the placeholder map
     placeholder_mapping = [("<ENV>", env)]
 
-    # get admin password
+    # get root password
     password_path = Path(f"database/release/secrets/{env}/db_local_password_root")
-    admin_password = secret_utils.get_secret(password_path, show_error=True)
+    root_password = secret_utils.get_secret(password_path, show_error=True)
 
     # get script path, including filler bits
     script_path = get_script_path(script_path)
@@ -33,7 +33,7 @@ def release(script_path, env, host=default_database_host):
     updated_script_path = update_script(script_path, placeholder_mapping)
 
     # run script with the admin password again, maybe, localhost?
-    run_script(updated_script_path, host, default_username, admin_password)
+    run_script(updated_script_path, host, default_username, root_password)
 
     # remove the temp script
     shutil.rmtree(updated_script_path.parent)
@@ -109,11 +109,14 @@ def update_script(script_path, placeholder_mapping):
 def run_script(script_path, host, username, password):
     # pass the tmp script
     password_mask = password[0:2] + "*****" + password[-2:]
-    echo = f"\tmysql --host {host} --port --verbose \\\n" \
-           f"\t      -u {username} -p{password_mask} \\\n" \
-           f"\t         < {script_path}"
-    typer.secho("\nRun the updated script into MySQL..")
-    typer.secho(echo, fg=const.CODE_TEXT_COLOUR)
+
+    echo = echo_utils.echo_command([
+        f"mysql --host {host} --port --verbose",
+        f"-u {username} -p{password_mask}",
+        f"< {script_path}"
+    ])
+
+    echo_utils.echo(title="Run the updated script into MySQL..", text=echo, level="code")
 
     command = f"mysql --host {host} --port 3306 --verbose " \
               f"-u {username} -p{password} < {script_path}"

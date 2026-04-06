@@ -85,7 +85,9 @@ def upsert_secret(secret_path=None, secret=None, *,
             if secret == "AUTO":
                 secret = generate_secret()
             encrypt(secret, secret_file)
-            typer.secho("\nSecret updated!", fg=const.SCSS_TEXT_COLOUR)
+
+            echo = f"\nSecret updated to {mask_secret(secret)}!"
+            typer.secho(echo, fg=const.SCSS_TEXT_COLOUR)
         
         # otherwise thank them for their time
         else:
@@ -94,8 +96,12 @@ def upsert_secret(secret_path=None, secret=None, *,
 
     # if there is no existing secret, save this one
     else:
+        if secret == "AUTO":
+            secret = generate_secret()
         encrypt(secret, secret_file)
-        typer.secho("\nSecret added!", fg=const.SCSS_TEXT_COLOUR)
+
+        echo = f"\nSecret {mask_secret(secret)} added!"
+        typer.secho(echo, fg=const.SCSS_TEXT_COLOUR)
 
     # return the secret we decided was this secret
     return secret

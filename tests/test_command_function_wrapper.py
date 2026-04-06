@@ -110,6 +110,20 @@ class FunctionWrapperTestCase(unittest.TestCase):
 
 
     @patch("typer.secho")
+    def test_command_function_wrapper_extract_env_secrets(self, mock_echo):
+        context = Path("functions/undo_event_publisher")
+        r = function_wrapper.extract_env_secrets(context)
+
+        t = {
+            "unencrypted_secret": "unencrypted_secret",
+            "encrypted_secret": "encrypted_secret"
+        }
+        self.assertEqual(r, t, "Should've captured secrets, inc unencrypred, encrypted")
+
+        echo_tests = [ "secret env", "export unencrypted_secret=un*****et" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+    @patch("typer.secho")
     def test_command_function_wrapper_extract_routes(self, mock_echo):
         context = Path("functions/undo_api_publisher")
         routes = "/undo /undo/{identifier}/xndo"

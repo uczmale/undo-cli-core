@@ -87,7 +87,7 @@ class SecretUtilsTestCase(unittest.TestCase):
         echo_tests = [ f"You already have a secret (ex*****23)" ]
         test_utils.assertEcho(self, echo_tests, mock_cnf)
 
-        echo_tests = [ "\nSecret updated!" ]
+        echo_tests = [ "\nSecret updated to ne*****89!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_secret").read_text()
@@ -140,7 +140,7 @@ class SecretUtilsTestCase(unittest.TestCase):
         echo_tests = [ "You already have a secret", "Secret updated!" ]
         test_utils.assertNotEcho(self, echo_tests, mock_echo)
 
-        echo_tests = [ "Secret added!" ]
+        echo_tests = [ "Secret en*****55 added!" ]
         test_utils.assertEcho(self, echo_tests, mock_echo)
 
         t = Path(".vault/db_secret")
@@ -172,6 +172,56 @@ class SecretUtilsTestCase(unittest.TestCase):
 
         t = Path(".vault/db_secret").read_text()
         self.assertEqual(t, self.secret, "Secret file shouldn't've been updated")
+
+
+    @patch("undo.utils.secret_utils.encrypt")
+    @patch("undo.utils.secret_utils.generate_secret")
+    @patch("typer.prompt")
+    @patch("typer.secho")
+    def test_utils_secret_utils_upsert_secret_new_auto(self,
+                                        mock_echo, mock_pmt, mock_gen, mock_enc):
+        mock_pmt.return_value = "AUTO"
+        mock_gen.return_value = auto_secret = "auto-generated-secret-new"
+
+        secret_path = ".vault/db_new_secret"
+        secret = None
+        r = secret_utils.upsert_secret(secret_path, secret)
+
+        echo_tests = [ "use AUTO" ]
+        test_utils.assertEcho(self, echo_tests, mock_pmt)
+
+        echo_tests = [ "au*****ew", "added!" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        args = mock_enc.call_args.args
+        self.assertEqual(args[0], auto_secret, "Should've encrypted the gen'd secret")
+        self.assertEqual(r, auto_secret, "Should've returned the gen'd secret")
+
+
+    @patch("undo.utils.secret_utils.encrypt")
+    @patch("undo.utils.secret_utils.generate_secret")
+    @patch("typer.confirm")
+    @patch("typer.prompt")
+    @patch("typer.secho")
+    def test_utils_secret_utils_upsert_secret_exists_auto(self,
+                                    mock_echo, mock_pmt, mock_cnf, mock_gen, mock_enc):
+        mock_pmt.return_value = "AUTO"
+        mock_cnf.return_value = True
+        mock_gen.return_value = auto_secret = "auto-generated-secret-ovr"
+
+        secret_path = ".vault/db_secret"
+        secret = "AUTO"
+        r = secret_utils.upsert_secret(secret_path, secret)
+
+        echo_tests = [ "already have", "ex*****23" ]
+        test_utils.assertEcho(self, echo_tests, mock_cnf)
+
+        echo_tests = [ "updated to", "au*****vr" ]
+        test_utils.assertEcho(self, echo_tests, mock_echo)
+
+        args = mock_enc.call_args.args
+        self.assertEqual(args[0], auto_secret, "Should've encrypted the gen'd secret")
+        self.assertEqual(r, auto_secret, "Should've returned the gen'd secret")
 
 
     def test_utils_secret_utils_get_vault(self):

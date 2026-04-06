@@ -20,7 +20,7 @@ def mysql_statement(statement, env, database_name=None):
     database_command = f"-D {database_name} " if database_name else ""
     database_command_echo = f"\t      {database_command}\\\n" if database_name else ""
     echo = f"\tmysql --host {default_database_host} --port 3306 \\\n" \
-           f"\t      -u {default_username} -p$(undo decrypt -f {password_path}) \\\n" \
+           f"\t      -u {default_username} -p$(undo secret decrypt -f {password_path}) -r \\\n" \
            f"{database_command_echo}" \
            f"\t      -e \"{statement}\"\n"
     typer.secho(f"Running database statement..")

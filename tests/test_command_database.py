@@ -23,9 +23,10 @@ class DatabaseTestCase(unittest.TestCase):
         os.chdir(self.reset_cwd)
 
 
+    @patch("undo.utils.secret_utils.encrypt")
     @patch("subprocess.run")
     @patch.dict(os.environ, { "UNDO_ROOT_CHECK_FILE": ".mock" })
-    def test_command_database_command_create(self, mock_run):
+    def test_command_database_command_create(self, mock_run, mock_enc):
         password_path = Path("database/release/secrets/local/db_local_password_root")
         password_tmp = Path("database/release/secrets/local/db_local_password_tmp")
         password_path.rename(password_tmp)
@@ -39,19 +40,20 @@ class DatabaseTestCase(unittest.TestCase):
         self.assertEqual(r.exit_code, 0, "Should have returned 0 exit code")
 
         echo_tests = [
-            "Secret added", "Running the MySQL container..",
+            "Secret", "added", "Running the MySQL container..",
             "docker run -d", "--name undodb"
         ]
         for t in echo_tests:
             self.assertIn(t, r.output, "Should have spat out text based on input")
 
-        args, kwargs = mock_run.call_args
-        a = args[0]
-        t = f"docker run -d"
-        self.assertIn(t, a, "Should've tried to run a container")
-
-        t = f"--name undodb"
-        self.assertIn(t, a, "Should've given the container the correct name")
+        args = mock_run.call_args.args
+        echo_tests = [
+            "docker run -d",
+            "MYSQL_ROOT_PASSWORD=invoke_password_input",
+            "--name undodb"
+        ]
+        for t in echo_tests:
+            self.assertIn(t, args[0], "Should've run container with the right stuff")
         
         # clean up
         password_tmp.rename(password_path)

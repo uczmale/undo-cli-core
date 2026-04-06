@@ -2,6 +2,7 @@
 # Posted by furas, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-01-01, License - CC BY-SA 4.0
 import os, sys, logging, re, json, base64
+import importlib
 # add trace logger level
 logger = logging.getLogger()
 logging.TRACE = logging.DEBUG - 5
@@ -199,6 +200,10 @@ class UnHandler(http.server.SimpleHTTPRequestHandler):
         evt = request.extract_request(event, convert=convert)
         event["easikit"] = { "request": evt, "event": evt }
         logger.log(logging.TRACE, "Handler event: " + str(event))
+
+        for name in list(sys.modules.keys()):
+            if name.startswith("handler."):
+                importlib.reload(sys.modules[name])
 
         resp = handler.handler(event)
         # print(resp)
